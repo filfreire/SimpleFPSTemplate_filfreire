@@ -8,7 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "FPSCharacter.h"
 
-const float AFPSLauchPad::LAUCH_PAD_SIZE = 100.0f;
+const float AFPSLauchPad::LAUCH_PAD_SIZE = 50.0f;
 
 // Sets default values
 AFPSLauchPad::AFPSLauchPad()
@@ -20,7 +20,7 @@ AFPSLauchPad::AFPSLauchPad()
 	OverlapComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	OverlapComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	OverlapComp->SetBoxExtent(FVector(LAUCH_PAD_SIZE));
+	OverlapComp->SetBoxExtent(FVector(LAUCH_PAD_SIZE, LAUCH_PAD_SIZE, LAUCH_PAD_SIZE));
 	RootComponent = OverlapComp;
 
 	OverlapComp->SetHiddenInGame(false);
@@ -34,21 +34,37 @@ AFPSLauchPad::AFPSLauchPad()
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeshComp->SetupAttachment(RootComponent);
 
+	LaunchStrength = 1500.0f;
+	LaunchPitchAngle = 35.0f;
+
 }
 
 void AFPSLauchPad::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+
+	FRotator LaunchDirection = GetActorRotation();
+	LaunchDirection.Pitch += LaunchPitchAngle;
+	FVector LaunchVelocity = LaunchDirection.Vector() * LaunchStrength;
+
+
+	// TODO - fixme - this part doesn't seem to be working
+	if (OtherComp && OtherComp->IsSimulatingPhysics())
+	{
+		OtherComp->AddImpulse(LaunchVelocity, NAME_None, true);
+		PlayEffects();
+	}
+
 	AFPSCharacter* MyPawn = Cast<AFPSCharacter>(OtherActor);
 
 	if (MyPawn == nullptr)
 	{
+
 		return;
 	}
 	else
 	{
+		MyPawn->LaunchCharacter(LaunchVelocity, true, true);
 		PlayEffects();
-		MyPawn->LaunchCharacter(FVector(500.0f), false, false);
-		// and LaunchCharacter()
 	}
 
 }

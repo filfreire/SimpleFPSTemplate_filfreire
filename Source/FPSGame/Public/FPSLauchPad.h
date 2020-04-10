@@ -35,6 +35,13 @@ protected:
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void PlayEffects();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Launchpad")
+	float LaunchStrength;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Launchpad")
+	float LaunchPitchAngle;
+
 private:
 	static const float LAUCH_PAD_SIZE;
 };
