@@ -38,7 +38,8 @@ void AFPSExtractionZone::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 	{
 		return;
 	}
-	else {
+	else
+	{
 		if (MyPawn->bIsCarryingObjective)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Overlapped with extraction zone!"));
