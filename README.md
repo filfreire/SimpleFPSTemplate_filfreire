@@ -39,7 +39,7 @@ To run tests, use the `.\scripts\RunTests.bat` batch file:
 # TEST_LOGNAME - e.g. RunTests.log
 # UNREAL_EDITOR_CMD - UE4Editor-Cmd.exe (Unreal 4) UnrealEditor-Cmd.exe (Unreal 5)
 
-.\scripts\RunTests.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TEST_SUITE_TO_RUN $env:TEST_REPORT_FOLDER $env:TEST_LOGNAME
+.\scripts\RunTests.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TEST_SUITE_TO_RUN $env:TEST_REPORT_FOLDER $env:TEST_LOGNAME $env:UNREAL_EDITOR_CMD
 ```
 
 ## How to package and run
