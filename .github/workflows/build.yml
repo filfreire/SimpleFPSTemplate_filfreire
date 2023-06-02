@@ -1,0 +1,53 @@
+name: Build+Test+Package
+
+on: [push, pull_request]
+
+env:
+  UNREAL_PATH: E:\unreal\UE_4.27
+  PROJECT_NAME: FPSGame.uproject
+  TEST_SUITE_TO_RUN: FPSGameTests.
+  TEST_REPORT_FOLDER: TestResults
+  TEST_LOGNAME: RunTests.log
+  TARGET_NAME: FPSGame
+  PACKAGE_FOLDER: PackageResults
+  UNREAL_EDITOR_CMD: UE4Editor-Cmd.exe
+
+jobs:
+  build:
+    name: Build+Test+Package
+    runs-on: self-hosted
+
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v3
+
+    - name: Build
+      run: .\scripts\Build.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME
+
+    - name: Test
+      run: .\scripts\RunTests.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TEST_SUITE_TO_RUN $env:TEST_REPORT_FOLDER $env:TEST_LOGNAME $env:UNREAL_EDITOR_CMD
+
+    - name: Archive test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        if-no-files-found: ignore
+        name: test-results
+        path: |
+          ${{env.TEST_REPORT_FOLDER}}
+          Saved\Logs\${{env.TEST_LOGNAME}}
+
+    - name: Package
+      run: .\scripts\Package.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TARGET_NAME $env:PACKAGE_FOLDER
+
+    - name: Compress package
+      run: .\scripts\CompressPackage.bat (Get-Location).Path $env:PACKAGE_FOLDER
+
+    - name: Archive package
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        if-no-files-found: ignore
+        name: win64-build
+        path: |
+          ${{env.PACKAGE_FOLDER}}.zip
