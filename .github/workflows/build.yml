@@ -18,6 +18,7 @@ env:
   TEST_LOGNAME: RunTests.log
   TARGET_NAME: FPSGame
   PACKAGE_FOLDER: PackageResults
+  PACKAGE_SHIPPING_FOLDER: PackageShippingResults
   UNREAL_EDITOR_CMD: UE4Editor-Cmd.exe
 
 jobs:
@@ -51,6 +52,14 @@ jobs:
     - name: Compress package
       run: .\scripts\CompressPackage.bat (Get-Location).Path $env:PACKAGE_FOLDER
 
+    - name: Package Shipping
+      if: contains(github.ref, 'release') || github.ref == 'refs/heads/master'
+      run: .\scripts\PackageForShipping.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TARGET_NAME $env:PACKAGE_SHIPPING_FOLDER
+
+    - name: Compress Shipping package
+      if: contains(github.ref, 'release') || github.ref == 'refs/heads/master'
+      run: .\scripts\CompressPackage.bat (Get-Location).Path $env:PACKAGE_SHIPPING_FOLDER
+
     - name: Archive package
       uses: actions/upload-artifact@v3
       if: always()
@@ -59,3 +68,4 @@ jobs:
         name: win64-build
         path: |
           ${{env.PACKAGE_FOLDER}}.zip
+          ${{env.PACKAGE_SHIPPING_FOLDER}}.zip
