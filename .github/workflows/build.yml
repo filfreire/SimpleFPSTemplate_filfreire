@@ -46,18 +46,16 @@ jobs:
           ${{env.TEST_REPORT_FOLDER}}
           Saved\Logs\${{env.TEST_LOGNAME}}
 
-    - name: Package
-      run: .\scripts\Package.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TARGET_NAME $env:PACKAGE_FOLDER
+    # - name: Package
+    #   run: .\scripts\Package.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TARGET_NAME $env:PACKAGE_FOLDER
 
-    - name: Compress package
-      run: .\scripts\CompressPackage.bat (Get-Location).Path $env:PACKAGE_FOLDER
+    # - name: Compress package
+    #   run: .\scripts\CompressPackage.bat (Get-Location).Path $env:PACKAGE_FOLDER
 
     - name: Package Shipping
-      if: contains(github.ref, 'release') || github.ref == 'refs/heads/master' || contains(github.ref, 'unreal5-upgrade')
       run: .\scripts\PackageForShipping.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TARGET_NAME $env:PACKAGE_SHIPPING_FOLDER
 
     - name: Compress Shipping package
-      if: contains(github.ref, 'release') || github.ref == 'refs/heads/master' || contains(github.ref, 'unreal5-upgrade')
       run: .\scripts\CompressPackage.bat (Get-Location).Path $env:PACKAGE_SHIPPING_FOLDER
 
     - name: Archive package
