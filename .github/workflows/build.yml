@@ -11,7 +11,7 @@ on:
       - master
 
 env:
-  UNREAL_PATH: E:\unreal\UE_4.27
+  UNREAL_PATH: E:\unreal\UE_5.2
   PROJECT_NAME: FPSGame.uproject
   TEST_SUITE_TO_RUN: FPSGameTests.
   TEST_REPORT_FOLDER: TestResults
@@ -19,7 +19,7 @@ env:
   TARGET_NAME: FPSGame
   PACKAGE_FOLDER: PackageResults
   PACKAGE_SHIPPING_FOLDER: PackageShippingResults
-  UNREAL_EDITOR_CMD: UE4Editor-Cmd.exe
+  UNREAL_EDITOR_CMD: UnrealEditor-Cmd.exe
 
 jobs:
   build:
