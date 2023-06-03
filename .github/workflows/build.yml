@@ -1,6 +1,14 @@
 name: Build+Test+Package
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - master
 
 env:
   UNREAL_PATH: E:\unreal\UE_4.27
