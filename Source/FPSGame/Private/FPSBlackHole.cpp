@@ -14,13 +14,13 @@ AFPSBlackHole::AFPSBlackHole()
 	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RootComponent = MeshComp;
 
-	InnerSphereComp = CreateAbstractDefaultSubobject<USphereComponent>(TEXT("InnerSphereComp"));
+	InnerSphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("InnerSphereComp"));
 	InnerSphereComp->SetSphereRadius(100);
 	InnerSphereComp->SetupAttachment(MeshComp);
 
 	InnerSphereComp->OnComponentBeginOverlap.AddDynamic(this, &AFPSBlackHole::OnOverlapBegin);
 
-	OuterSphereComp = CreateAbstractDefaultSubobject<USphereComponent>(TEXT("OuterSphereComp"));
+	OuterSphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("OuterSphereComp"));
 	OuterSphereComp->SetSphereRadius(2000);
 	OuterSphereComp->SetupAttachment(MeshComp);
 

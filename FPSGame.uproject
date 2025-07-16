@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "4.27",
+	"EngineAssociation": "5.6",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -248,11 +248,7 @@
 			"Enabled": false
 		},
 		{
-			"Name": "AppleImageUtils",
-			"Enabled": false
-		},
-		{
-			"Name": "ArchVisCharacter",
+			"Name": "AndroidFileServer",
 			"Enabled": false
 		},
 		{
@@ -260,27 +256,24 @@
 			"Enabled": false
 		},
 		{
-			"Name": "Synthesis",
-			"Enabled": false
-		},
-		{
-			"Name": "AvfMedia",
-			"Enabled": false
-		},
-		{
-			"Name": "BackChannel",
-			"Enabled": false
+			"Name": "Bridge",
+			"Enabled": false,
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Mac",
+				"Linux"
+			]
 		},
 		{
 			"Name": "CableComponent",
 			"Enabled": false
 		},
 		{
-			"Name": "ChaosClothEditor",
+			"Name": "CameraShakePreviewer",
 			"Enabled": false
 		},
 		{
-			"Name": "ChaosCloth",
+			"Name": "ChaosClothEditor",
 			"Enabled": false
 		},
 		{
@@ -296,7 +289,23 @@
 			"Enabled": false
 		},
 		{
+			"Name": "ChaosCloth",
+			"Enabled": false
+		},
+		{
+			"Name": "ChaosUserDataPT",
+			"Enabled": false
+		},
+		{
+			"Name": "CharacterAI",
+			"Enabled": false
+		},
+		{
 			"Name": "ChunkDownloader",
+			"Enabled": false
+		},
+		{
+			"Name": "ControlRigSpline",
 			"Enabled": false
 		},
 		{
@@ -304,15 +313,56 @@
 			"Enabled": false
 		},
 		{
+			"Name": "CurveEditorTools",
+			"Enabled": false
+		},
+		{
+			"Name": "CustomMeshComponent",
+			"Enabled": false
+		},
+		{
+			"Name": "DumpGPUServices",
+			"Enabled": false
+		},
+		{
 			"Name": "FacialAnimation",
 			"Enabled": false
 		},
 		{
-			"Name": "GeometryMode",
+			"Name": "GeometryCache",
 			"Enabled": false
 		},
 		{
 			"Name": "MeshPainting",
+			"Enabled": false
+		},
+		{
+			"Name": "MediaPlate",
+			"Enabled": false
+		},
+		{
+			"Name": "Dataflow",
+			"Enabled": false
+		},
+		{
+			"Name": "UVEditor",
+			"Enabled": false
+		},
+		{
+			"Name": "GLTFExporter",
+			"Enabled": false
+		},
+		{
+			"Name": "InterchangeEditor",
+			"Enabled": false,
+			"SupportedTargetPlatforms": [
+				"Win64",
+				"Linux",
+				"Mac"
+			]
+		},
+		{
+			"Name": "InterchangeTests",
 			"Enabled": false
 		},
 		{
@@ -328,23 +378,15 @@
 			"Enabled": false
 		},
 		{
-			"Name": "CameraShakePreviewer",
+			"Name": "Metasound",
 			"Enabled": false
 		},
 		{
-			"Name": "GameplayCameras",
+			"Name": "MediaPlayerEditor",
 			"Enabled": false
 		},
 		{
-			"Name": "MatineeToLevelSequence",
-			"Enabled": false
-		},
-		{
-			"Name": "LevelSequenceEditor",
-			"Enabled": false
-		},
-		{
-			"Name": "MotoSynth",
+			"Name": "OnlineBase",
 			"Enabled": false
 		},
 		{
@@ -352,11 +394,50 @@
 			"Enabled": false
 		},
 		{
-			"Name": "PhysXVehicles",
+			"Name": "PixWinPlugin",
+			"Enabled": false,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			]
+		},
+		{
+			"Name": "ResonanceAudio",
 			"Enabled": false
 		},
 		{
-			"Name": "PlatformCrypto",
+			"Name": "ProceduralMeshComponent",
+			"Enabled": false
+		},
+		{
+			"Name": "SequencerAnimTools",
+			"Enabled": false
+		},
+		{
+			"Name": "LevelSequenceEditor",
+			"Enabled": false
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": false
+		},
+		{
+			"Name": "GameplayCameras",
+			"Enabled": false
+		},
+		{
+			"Name": "AnimationData",
+			"Enabled": false
+		},
+		{
+			"Name": "ControlRig",
+			"Enabled": false
+		},
+		{
+			"Name": "IKRig",
+			"Enabled": false
+		},
+		{
+			"Name": "RenderDocPlugin",
 			"Enabled": false
 		},
 		{
@@ -364,7 +445,11 @@
 			"Enabled": false
 		},
 		{
-			"Name": "SpeedTreeImporter",
+			"Name": "AnimationSharing",
+			"Enabled": false
+		},
+		{
+			"Name": "TcpMessaging",
 			"Enabled": false
 		},
 		{
