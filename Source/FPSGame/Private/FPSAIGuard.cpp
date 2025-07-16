@@ -5,7 +5,7 @@
 #include "Perception/PawnSensingComponent.h"
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
-#include "AIModule/Classes/Blueprint/AIBlueprintHelperLibrary.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -53,10 +53,10 @@ void AFPSAIGuard::OnPawnSeen(APawn* SeenPawn)
 
 	SetGuardState(EAIState::Alerted);
 
-	AController* Controller = GetController();
-	if (Controller)
+	AController* MyController = GetController();
+	if (MyController)
 	{
-		Controller->StopMovement();
+		MyController->StopMovement();
 	}
 }
 
@@ -82,10 +82,10 @@ void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector& Location, 
 
 	SetGuardState(EAIState::Suspicious);
 
-	AController* Controller = GetController();
-	if (Controller)
+	AController* MyController = GetController();
+	if (MyController)
 	{
-		Controller->StopMovement();
+		MyController->StopMovement();
 	}
 
 }
