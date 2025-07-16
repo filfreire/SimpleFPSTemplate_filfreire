@@ -9,5 +9,8 @@ public class FPSGameTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		ExtraModuleNames.Add("FPSGame");
+		DefaultBuildSettings = BuildSettingsVersion.V5;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+		bOverrideBuildEnvironment = true;
 	}
 }
