@@ -1,0 +1,5 @@
+powershell -Command rm -Recurse "Binaries"
+powershell -Command rm -Recurse "Build"
+powershell -Command rm -Recurse "DerivedDataCache"
+powershell -Command rm -Recurse "Intermediate"
+powershell -Command rm -Recurse "Saved"
