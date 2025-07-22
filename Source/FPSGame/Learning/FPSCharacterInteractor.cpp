@@ -197,6 +197,15 @@ void UFPSCharacterInteractor::PerformAgentAction_Implementation(
 		UE_LOG(LogTemp, Error, TEXT("FPSCharacterInteractor: Failed to get LookUp action for agent %d"), AgentId);
 	}
 
+	// DEBUG: Log action values for each agent
+	static int32 LogCounter = 0;
+	LogCounter++;
+	if (LogCounter % 60 == 0) // Log every 60 calls (roughly every second at 60fps)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AGENT %d ACTION: Forward=%.3f, Right=%.3f, Turn=%.3f, LookUp=%.3f"), 
+			AgentId, MoveForwardValue, MoveRightValue, TurnValue, LookUpValue);
+	}
+
 	// Apply movement actions to the character
 	if (Character)
 	{

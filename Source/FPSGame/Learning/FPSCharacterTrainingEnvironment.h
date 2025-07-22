@@ -51,10 +51,14 @@ public:
 	FVector ResetCenter = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
-	FVector ResetBounds = FVector(2000.0f, 2000.0f, 0.0f);
+	FVector ResetBounds = FVector(2000.0f, 2000.0f, 500.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
 	float MinDistanceBetweenCharacterAndTarget = 500.0f;
+
+	// Additional clearance above the reset center to prevent floor clipping
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
+	float GroundClearance = 200.0f;
 
 private:
 	// Store previous distances for reward calculation

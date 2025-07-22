@@ -145,7 +145,24 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 	FVector CharacterResetLocation;
 	CharacterResetLocation.X = ResetCenter.X + FMath::RandRange(-ResetBounds.X, ResetBounds.X);
 	CharacterResetLocation.Y = ResetCenter.Y + FMath::RandRange(-ResetBounds.Y, ResetBounds.Y);
-	CharacterResetLocation.Z = ResetCenter.Z + FMath::Max(ResetBounds.Z, 100.0f); // Ensure minimum 100 units above ground
+	
+	// Find ground level at this location using line trace
+	FVector TraceStart = FVector(CharacterResetLocation.X, CharacterResetLocation.Y, ResetCenter.Z + ResetBounds.Z + 1000.0f);
+	FVector TraceEnd = FVector(CharacterResetLocation.X, CharacterResetLocation.Y, ResetCenter.Z - ResetBounds.Z - 1000.0f);
+	
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.bTraceComplex = false;
+	QueryParams.AddIgnoredActor(Character);
+	
+	float GroundZ = ResetCenter.Z; // Default to reset center if no ground found
+	if (Character->GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldStatic, QueryParams))
+	{
+		GroundZ = HitResult.Location.Z;
+	}
+	
+	// Place character above ground with clearance
+	CharacterResetLocation.Z = GroundZ + GroundClearance;
 
 	// Reset character position and rotation
 	Character->SetActorLocation(CharacterResetLocation);
@@ -166,7 +183,24 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 		do {
 			TargetResetLocation.X = ResetCenter.X + FMath::RandRange(-ResetBounds.X, ResetBounds.X);
 			TargetResetLocation.Y = ResetCenter.Y + FMath::RandRange(-ResetBounds.Y, ResetBounds.Y);
-			TargetResetLocation.Z = ResetCenter.Z + FMath::Max(ResetBounds.Z, 100.0f); // Keep above ground
+			
+			// Find ground level for target using line trace
+			FVector TargetTraceStart = FVector(TargetResetLocation.X, TargetResetLocation.Y, ResetCenter.Z + ResetBounds.Z + 1000.0f);
+			FVector TargetTraceEnd = FVector(TargetResetLocation.X, TargetResetLocation.Y, ResetCenter.Z - ResetBounds.Z - 1000.0f);
+			
+			FHitResult TargetHitResult;
+			FCollisionQueryParams TargetQueryParams;
+			TargetQueryParams.bTraceComplex = false;
+			TargetQueryParams.AddIgnoredActor(Character);
+			TargetQueryParams.AddIgnoredActor(TargetActor);
+			
+			float TargetGroundZ = ResetCenter.Z; // Default to reset center if no ground found
+			if (Character->GetWorld()->LineTraceSingleByChannel(TargetHitResult, TargetTraceStart, TargetTraceEnd, ECC_WorldStatic, TargetQueryParams))
+			{
+				TargetGroundZ = TargetHitResult.Location.Z;
+			}
+			
+			TargetResetLocation.Z = TargetGroundZ + 50.0f; // Target doesn't need as much clearance as character
 			Attempts++;
 		} while (FVector::Dist(CharacterResetLocation, TargetResetLocation) < MinDistanceBetweenCharacterAndTarget && Attempts < 100);
 
