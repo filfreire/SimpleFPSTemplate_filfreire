@@ -15,6 +15,10 @@
 	],
 	"Plugins": [
 		{
+			"Name": "LearningAgents",
+			"Enabled": true
+		},
+		{
 			"Name": "FunctionalTestingEditor",
 			"Enabled": true
 		},
