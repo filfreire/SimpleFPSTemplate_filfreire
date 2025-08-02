@@ -1,11 +1,11 @@
-# Package script for CoopGameFleep project
-# Usage: .\scripts\package-local.ps1 [-Target "CoopGameFleep"] [-Platform "Win64"] [-Config "Shipping"] [-OutputDir "Packaged"]
+# Package script for FPSGame project
+# Usage: .\scripts\package-local.ps1 [-Target "FPSGame"] [-Platform "Win64"] [-Config "Shipping"] [-OutputDir "Packaged"]
 
 param(
     [string]$UnrealPath = "",
     [string]$ProjectPath = (Get-Location).Path,
-    [string]$ProjectName = "CoopGameFleep.uproject",
-    [string]$Target = "CoopGameFleep",
+    [string]$ProjectName = "FPSGame.uproject",
+    [string]$Target = "FPSGame",
     [string]$Platform = "Win64",
     [string]$Config = "Shipping",
     [string]$OutputDir = "Packaged"
@@ -24,7 +24,7 @@ if ([string]::IsNullOrEmpty($UnrealPath)) {
     }
 }
 
-Write-Host "Packaging CoopGameFleep project..." -ForegroundColor Green
+Write-Host "Packaging FPSGame project..." -ForegroundColor Green
 Write-Host "Unreal Path: $UnrealPath" -ForegroundColor Yellow
 Write-Host "Project Path: $ProjectPath" -ForegroundColor Yellow
 Write-Host "Project Name: $ProjectName" -ForegroundColor Yellow
