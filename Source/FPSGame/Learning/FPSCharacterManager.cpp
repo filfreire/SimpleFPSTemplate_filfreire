@@ -235,7 +235,8 @@ void AFPSCharacterManager::InitializeManager()
 {
 	// Should neural networks be re-initialized
 	const bool ReInitialize = (RunMode == EFPSCharacterManagerMode::ReInitialize);
-
+	
+	TrainingSettings.bUseTensorboard = true;
 	// FIXED: Get current agent count for multi-agent setup verification
 	TArray<int32> AgentIds;
 	TArray<UObject*> AllAgentObjects;
