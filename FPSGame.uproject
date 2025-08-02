@@ -15,6 +15,14 @@
 	],
 	"Plugins": [
 		{
+			"Name": "LearningAgents",
+			"Enabled": true
+		},
+		{
+			"Name": "Tensorboard",
+			"Enabled": true
+		},
+		{
 			"Name": "FunctionalTestingEditor",
 			"Enabled": true
 		},
