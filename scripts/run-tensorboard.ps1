@@ -15,12 +15,13 @@ if (Test-Path $pythonPath) {
         Write-Host "Found TensorBoard logs at: $logDir" -ForegroundColor Green
         
         # Run TensorBoard using the found Python executable
-        Write-Host "Starting TensorBoard for SimpleFPSTemplate..." -ForegroundColor Yellow
-        Write-Host "TensorBoard will be available at: http://localhost:6007" -ForegroundColor Cyan
+        Write-Host "Starting TensorBoard for FPSGame..." -ForegroundColor Yellow
+        Write-Host "TensorBoard will be available at: http://localhost:6006" -ForegroundColor Cyan
         Write-Host "Press Ctrl+C to stop TensorBoard" -ForegroundColor Yellow
         
         try {
-            & $pythonPath -m tensorboard --logdir=$logDir --port=6007
+            $tensorboardPath = Join-Path (Split-Path $pythonPath -Parent) "tensorboard.exe"
+            & $tensorboardPath --logdir=$logDir --port=6006
         }
         catch {
             Write-Host "Error occurred while running TensorBoard: $($_.Exception.Message)" -ForegroundColor Red
@@ -37,6 +38,5 @@ if (Test-Path $pythonPath) {
     Write-Host "Also run install-tensorboard.ps1 to install TensorBoard." -ForegroundColor Yellow
 }
 
-# Pause to see the output if TensorBoard exits
-Write-Host "Press any key to continue..." -ForegroundColor Cyan
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+# TensorBoard started successfully
+

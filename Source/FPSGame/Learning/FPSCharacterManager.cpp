@@ -18,9 +18,58 @@
 AFPSCharacterManager::AFPSCharacterManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+	// Check command line arguments to determine if we're in headless training mode
+	FString CommandLine = FCommandLine::Get();
+	bool bIsHeadlessTraining = CommandLine.Contains(TEXT("-headless-training")) || 
+	                          CommandLine.Contains(TEXT("-nullrhi")) || 
+	                          CommandLine.Contains(TEXT("-unattended"));
+	
+	// Only force training mode for headless training, allow Blueprint settings in editor
+	if (bIsHeadlessTraining)
+	{
+		RunMode = EFPSCharacterManagerMode::Training;
+		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode to Training: %d"), (int32)RunMode);
+	}
+	else
+	{
+		// In editor mode, use Blueprint default (Training) but allow override
+		RunMode = EFPSCharacterManagerMode::Training;
+		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Editor mode detected, using Blueprint RunMode: %d"), (int32)RunMode);
+	}
+	
 	// set training settings for headless training
 	TrainingSettings.bUseTensorboard = true;
 	TrainingSettings.bSaveSnapshots = true;
+
+	// Configure trainer process settings for headless training
+	// These paths are relative to the packaged executable location
+	// Auto-detect engine path based on hostname (same logic as packaging script)
+	FString HostName = FPlatformProcess::ComputerName();
+	FString EnginePath;
+	// For headless training, we need to use the actual Engine installation
+	// Use absolute paths since relative paths with drive letters are problematic
+	if (HostName == TEXT("filfreire01"))
+	{
+		EnginePath = TEXT("C:/unreal/UE_5.6/Engine");
+	}
+	else if (HostName == TEXT("filfreire02"))
+	{
+		EnginePath = TEXT("D:/unreal/UE_5.6/Engine");
+	}
+	else
+	{
+		// Default fallback
+		EnginePath = TEXT("C:/unreal/UE_5.6/Engine");
+	}
+	
+	TrainerProcessSettings.NonEditorEngineRelativePath = EnginePath;
+	TrainerProcessSettings.NonEditorIntermediateRelativePath = TEXT("../../../../../Intermediate");
+	
+	// Log the configured paths for debugging
+	UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Configured trainer paths for hostname '%s':"), *HostName);
+	UE_LOG(LogTemp, Log, TEXT("  Engine Path: %s"), *TrainerProcessSettings.NonEditorEngineRelativePath);
+	UE_LOG(LogTemp, Log, TEXT("  Intermediate Path: %s"), *TrainerProcessSettings.NonEditorIntermediateRelativePath);
 
 	LearningAgentsManager = CreateDefaultSubobject<UFPSCharacterManagerComponent>(TEXT("Learning Agents Manager"));
 }
@@ -236,6 +285,25 @@ void AFPSCharacterManager::InitializeAgents()
 
 void AFPSCharacterManager::InitializeManager()
 {
+	UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: InitializeManager called with RunMode: %d"), (int32)RunMode);
+	
+	// Check if we're in headless training mode and force Training if needed
+	FString CommandLine = FCommandLine::Get();
+	bool bIsHeadlessTraining = CommandLine.Contains(TEXT("-headless-training")) || 
+	                          CommandLine.Contains(TEXT("-nullrhi")) || 
+	                          CommandLine.Contains(TEXT("-unattended"));
+	
+	// Only force Training mode for headless training, respect Blueprint settings in editor
+	if (bIsHeadlessTraining && RunMode != EFPSCharacterManagerMode::Training)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode from %d to Training"), (int32)RunMode);
+		RunMode = EFPSCharacterManagerMode::Training;
+	}
+	else if (!bIsHeadlessTraining)
+	{
+		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Editor mode - respecting Blueprint RunMode: %d"), (int32)RunMode);
+	}
+	
 	// Should neural networks be re-initialized
 	const bool ReInitialize = (RunMode == EFPSCharacterManagerMode::ReInitialize);
 
@@ -353,7 +421,7 @@ void AFPSCharacterManager::InitializeManager()
 	}
 	UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Created PPO Trainer successfully"));
 
-	UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Initialization complete. Mode: %d, Agents: %d"), (int32)RunMode, AgentCount);
+	UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Initialization complete. Mode: %d"), (int32)RunMode);
 	UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: ===== MANAGER INITIALIZATION COMPLETE ====="));
 }
 
