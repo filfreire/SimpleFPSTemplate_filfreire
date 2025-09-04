@@ -12,6 +12,63 @@ param(
     [string]$OutputDir = "TrainingBuild"
 )
 
+# Helper function to calculate relative path (compatible with older PowerShell versions)
+function Get-RelativePath {
+    param([string]$FromPath, [string]$ToPath)
+    
+    $FromPathNormalized = (Resolve-Path $FromPath).Path.TrimEnd('\')
+    $ToPathNormalized = (Resolve-Path $ToPath).Path.TrimEnd('\')
+    
+    # Split paths into components
+    $FromParts = $FromPathNormalized.Split('\')
+    $ToParts = $ToPathNormalized.Split('\')
+    
+    # Find common root
+    $CommonLength = 0
+    $MinLength = [Math]::Min($FromParts.Length, $ToParts.Length)
+    
+    for ($i = 0; $i -lt $MinLength; $i++) {
+        if ($FromParts[$i] -eq $ToParts[$i]) {
+            $CommonLength++
+        } else {
+            break
+        }
+    }
+    
+    # Calculate relative path
+    $UpLevels = $FromParts.Length - $CommonLength
+    $RelativeParts = @()
+    
+    # Add ".." for each level up
+    for ($i = 0; $i -lt $UpLevels; $i++) {
+        $RelativeParts += ".."
+    }
+    
+    # Add remaining path components
+    for ($i = $CommonLength; $i -lt $ToParts.Length; $i++) {
+        $RelativeParts += $ToParts[$i]
+    }
+    
+    $RelativePath = $RelativeParts -join '/'
+    return $RelativePath
+}
+
+# Helper function to calculate relative path to Engine
+function Get-RelativePathToEngine {
+    param([string]$ExePath, [string]$UnrealPath)
+    
+    $UnrealEngineDir = Join-Path $UnrealPath "Engine"
+    return Get-RelativePath -FromPath $ExePath -ToPath $UnrealEngineDir
+}
+
+# Helper function to calculate relative path to Intermediate
+function Get-RelativePathToIntermediate {
+    param([string]$ExePath, [string]$ProjectPath)
+    
+    $IntermediateDir = Join-Path $ProjectPath "Intermediate"
+    return Get-RelativePath -FromPath $ExePath -ToPath $IntermediateDir
+}
+
 # Determine UnrealPath based on hostname if not provided
 if ([string]::IsNullOrEmpty($UnrealPath)) {
     $hostname = [System.Net.Dns]::GetHostName()
@@ -138,31 +195,6 @@ if ($LASTEXITCODE -eq 0) {
 } else {
     Write-Error "Packaging failed with exit code: $LASTEXITCODE"
     exit $LASTEXITCODE
-}
-
-# Helper function to calculate relative path to Engine
-function Get-RelativePathToEngine {
-    param([string]$ExePath, [string]$UnrealPath)
-    
-    $ExePathNormalized = (Resolve-Path $ExePath).Path
-    $UnrealEngineDir = Join-Path $UnrealPath "Engine"
-    $UnrealEngineDirNormalized = (Resolve-Path $UnrealEngineDir).Path
-    
-    # Convert to relative path
-    $RelativePath = [System.IO.Path]::GetRelativePath($ExePathNormalized, $UnrealEngineDirNormalized)
-    return $RelativePath.Replace('\', '/')
-}
-
-# Helper function to calculate relative path to Intermediate
-function Get-RelativePathToIntermediate {
-    param([string]$ExePath, [string]$ProjectPath)
-    
-    $ExePathNormalized = (Resolve-Path $ExePath).Path
-    $IntermediateDir = Join-Path $ProjectPath "Intermediate"
-    
-    # Convert to relative path
-    $RelativePath = [System.IO.Path]::GetRelativePath($ExePathNormalized, $IntermediateDir)
-    return $RelativePath.Replace('\', '/')
 }
 
 Write-Host "`nPress any key to continue..." -ForegroundColor Cyan
