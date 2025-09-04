@@ -86,11 +86,54 @@ try {
     Write-Host "You can monitor the log file in another terminal with:" -ForegroundColor Cyan
     Write-Host "  Get-Content -Path '$LogFile' -Wait" -ForegroundColor White
     
-    # Wait for the process to complete
-    $Process.WaitForExit()
-    $ExitCode = $Process.ExitCode
+    # Wait for the process to complete with CTRL+C handling
+    $ProcessRunning = $true
+    $ExitCode = 0
     
-    if ($ExitCode -eq 0) {
+    # Set up CTRL+C handler
+    $CtrlCPressed = $false
+    [Console]::CancelKeyPress += {
+        param($sender, $e)
+        $e.Cancel = $true  # Prevent immediate termination
+        $script:CtrlCPressed = $true
+        Write-Host "`n`nCTRL+C detected! Stopping training process..." -ForegroundColor Yellow
+    }
+    
+    # Poll the process status while checking for CTRL+C
+    while ($ProcessRunning -and !$CtrlCPressed) {
+        if ($Process.HasExited) {
+            $ProcessRunning = $false
+            $ExitCode = $Process.ExitCode
+        } else {
+            Start-Sleep -Milliseconds 500  # Check every 500ms
+        }
+    }
+    
+    # Handle CTRL+C termination
+    if ($CtrlCPressed) {
+        Write-Host "Terminating training process (PID: $($Process.Id))..." -ForegroundColor Yellow
+        try {
+            # Try graceful termination first
+            if (!$Process.HasExited) {
+                $Process.CloseMainWindow()
+                Start-Sleep -Seconds 2
+            }
+            
+            # Force kill if still running
+            if (!$Process.HasExited) {
+                Write-Host "Force terminating training process..." -ForegroundColor Red
+                $Process.Kill()
+                $Process.WaitForExit(5000)  # Wait up to 5 seconds for cleanup
+            }
+            
+            Write-Host "Training process terminated by user." -ForegroundColor Yellow
+            $ExitCode = -1
+        }
+        catch {
+            Write-Warning "Error terminating process: $($_.Exception.Message)"
+        }
+    }
+    elseif ($ExitCode -eq 0) {
         Write-Host "`nTraining completed successfully!" -ForegroundColor Green
     } else {
         Write-Host "`nTraining ended with exit code: $ExitCode" -ForegroundColor Yellow
