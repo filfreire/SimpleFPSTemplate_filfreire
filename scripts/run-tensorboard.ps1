@@ -16,12 +16,14 @@ if (Test-Path $pythonPath) {
         
         # Run TensorBoard using the found Python executable
         Write-Host "Starting TensorBoard for FPSGame..." -ForegroundColor Yellow
-        Write-Host "TensorBoard will be available at: http://localhost:6006" -ForegroundColor Cyan
+        Write-Host "TensorBoard will be available at:" -ForegroundColor Cyan
+        Write-Host "  - Locally: http://localhost:6006" -ForegroundColor Cyan
+        Write-Host "  - Network: http://${env:COMPUTERNAME}.local:6006" -ForegroundColor Cyan
         Write-Host "Press Ctrl+C to stop TensorBoard" -ForegroundColor Yellow
         
         try {
             $tensorboardPath = Join-Path (Split-Path $pythonPath -Parent) "tensorboard.exe"
-            & $tensorboardPath --logdir=$logDir --port=6006
+            & $tensorboardPath --logdir=$logDir --port=6006 --host=0.0.0.0
         }
         catch {
             Write-Host "Error occurred while running TensorBoard: $($_.Exception.Message)" -ForegroundColor Red
