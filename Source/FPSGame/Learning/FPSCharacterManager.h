@@ -79,12 +79,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Manager Settings")
 	int32 RandomSeed = 1234;
 
-	// Training termination settings
-	UPROPERTY(EditAnywhere, Category = "Manager Settings", meta = (DisplayName = "Max Training Episodes", Tooltip = "Maximum number of training episodes (ticks) before auto-exit (0 = unlimited)"))
-	int32 MaxTrainingEpisodes = 0;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Manager Settings", meta = (DisplayName = "Current Training Episodes"))
-	int32 CurrentTrainingEpisodes = 0;
 
 	// Learning settings
 	UPROPERTY(EditAnywhere, Category = "Learning Settings")

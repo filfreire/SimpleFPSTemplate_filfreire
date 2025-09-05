@@ -8,7 +8,6 @@ param(
     [string]$MapName = "P_LearningAgentsTrial1",  # Default learning map
     [string]$LogFile = "fpscharacter_training.log",
     [string]$ExeName = "FPSGame.exe",
-    [int]$MaxTrainingEpisodes = 0  # 0 = unlimited, otherwise number of training episodes (ticks)
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
@@ -64,13 +63,6 @@ $GameArgs = @(
     "-ini:Engine:[Core.Log]:LogPython=Verbose"  # Enable Python logging for Learning Agents
 )
 
-# Add MaxTrainingEpisodes parameter to game arguments
-if ($MaxTrainingEpisodes -gt 0) {
-    $GameArgs += "-MaxTrainingEpisodes=$MaxTrainingEpisodes"
-    Write-Host "  Max Training Episodes: $MaxTrainingEpisodes" -ForegroundColor White
-} else {
-    Write-Host "  Max Training Episodes: Unlimited" -ForegroundColor White
-}
 
 # Debug: Show all game arguments
 Write-Host "`nGame Arguments:" -ForegroundColor Cyan
@@ -97,11 +89,7 @@ try {
     # Wait for the process to complete
     Write-Host "`nWaiting for training to complete..." -ForegroundColor Yellow
     
-    if ($MaxTrainingEpisodes -gt 0) {
-        Write-Host "Training will stop after $MaxTrainingEpisodes episodes (managed by Unreal Engine)" -ForegroundColor Green
-    } else {
-        Write-Host "Training will run indefinitely (Press Ctrl+C to stop)" -ForegroundColor Cyan
-    }
+    Write-Host "Training will run indefinitely (Press Ctrl+C to stop)" -ForegroundColor Cyan
     
     # Let Unreal Engine handle termination, just wait for it to exit
     $Process.WaitForExit()
