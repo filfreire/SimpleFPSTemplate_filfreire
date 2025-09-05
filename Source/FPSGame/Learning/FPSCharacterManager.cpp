@@ -47,6 +47,9 @@ AFPSCharacterManager::AFPSCharacterManager()
 	// Auto-detect engine path based on hostname (same logic as packaging script)
 	FString HostName = FPlatformProcess::ComputerName();
 	FString EnginePath;
+	
+	// Platform-specific path detection
+#if PLATFORM_WINDOWS
 	// For headless training, we need to use the actual Engine installation
 	// Use absolute paths since relative paths with drive letters are problematic
 	if (HostName == TEXT("filfreire01"))
@@ -59,9 +62,59 @@ AFPSCharacterManager::AFPSCharacterManager()
 	}
 	else
 	{
-		// Default fallback
-		EnginePath = TEXT("C:/unreal/UE_5.6/Engine");
+		// Try to find Unreal Engine in typical installation locations
+		FString ProgramFiles = FPlatformMisc::GetEnvironmentVariable(TEXT("ProgramFiles"));
+		FString ProgramFilesX86 = FPlatformMisc::GetEnvironmentVariable(TEXT("ProgramFiles(x86)"));
+		
+		// Check common Unreal Engine installation paths
+		TArray<FString> PossiblePaths = {
+			TEXT("C:/Program Files/Epic Games/UE_5.6/Engine"),
+			TEXT("C:/Program Files (x86)/Epic Games/UE_5.6/Engine"),
+			TEXT("C:/unreal/UE_5.6/Engine"),
+			TEXT("D:/unreal/UE_5.6/Engine"),
+			ProgramFiles + TEXT("/Epic Games/UE_5.6/Engine"),
+			ProgramFilesX86 + TEXT("/Epic Games/UE_5.6/Engine")
+		};
+		
+		// Find the first existing path
+		bool bFoundPath = false;
+		for (const FString& Path : PossiblePaths)
+		{
+			if (FPaths::DirectoryExists(Path))
+			{
+				EnginePath = Path;
+				bFoundPath = true;
+				UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Found Unreal Engine at: %s"), *EnginePath);
+				break;
+			}
+		}
+		
+		// Final fallback if no path found
+		if (!bFoundPath)
+		{
+			EnginePath = TEXT("C:/Program Files/Epic Games/UE_5.6/Engine");
+			UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Unreal Engine not found in common locations, using default: %s"), *EnginePath);
+		}
 	}
+#elif PLATFORM_LINUX
+	// Linux paths - adjust as needed for your installation
+	if (HostName == TEXT("filfreire01"))
+	{
+		EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
+	}
+	else if (HostName == TEXT("filfreire02"))
+	{
+		EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
+	}
+	else
+	{
+		// Default fallback for Linux
+		EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
+	}
+#else
+	// Other platforms - use default Linux path
+	EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
+#endif
 	
 	TrainerProcessSettings.NonEditorEngineRelativePath = EnginePath;
 	TrainerProcessSettings.NonEditorIntermediateRelativePath = TEXT("../../../../../Intermediate");

@@ -64,10 +64,9 @@ $GameArgs = @(
     "-ini:Engine:[Core.Log]:LogPython=Verbose"  # Enable Python logging for Learning Agents
 )
 
-# Add timeout if specified
+# Note: Timeout is handled by PowerShell, not Unreal Engine
 if ($MaxTrainingTime -gt 0) {
-    $GameArgs += "-ExecCmds=`"Automation RunTests;timeout $MaxTrainingTime;quit`""
-    Write-Host "  Timeout: $MaxTrainingTime minutes" -ForegroundColor White
+    Write-Host "  Timeout: $MaxTrainingTime minutes (PowerShell managed)" -ForegroundColor White
 }
 
 Write-Host "`nStarting headless training..." -ForegroundColor Green
@@ -79,71 +78,92 @@ Write-Host "`nExecuting command:" -ForegroundColor Gray
 Write-Host "$ExeName $($GameArgs -join ' ')" -ForegroundColor Gray
 
 try {
-    # Start the training process
-    $Process = Start-Process -FilePath $GameExecutable -ArgumentList $GameArgs -NoNewWindow -PassThru
+    # Start the training process (hidden window)
+    $Process = Start-Process -FilePath $GameExecutable -ArgumentList $GameArgs -WindowStyle Hidden -PassThru
     
     Write-Host "`nTraining process started with PID: $($Process.Id)" -ForegroundColor Green
     Write-Host "You can monitor the log file in another terminal with:" -ForegroundColor Cyan
     Write-Host "  Get-Content -Path '$LogFile' -Wait" -ForegroundColor White
     
-    # Wait for the process to complete with CTRL+C handling
-    $ProcessRunning = $true
-    $ExitCode = 0
+    # Wait for the process to complete with optional timeout
+    Write-Host "`nWaiting for training to complete..." -ForegroundColor Yellow
     
-    # Set up CTRL+C handler
-    $CtrlCPressed = $false
-    [Console]::CancelKeyPress += {
-        param($sender, $e)
-        $e.Cancel = $true  # Prevent immediate termination
-        $script:CtrlCPressed = $true
-        Write-Host "`n`nCTRL+C detected! Stopping training process..." -ForegroundColor Yellow
-    }
-    
-    # Poll the process status while checking for CTRL+C
-    while ($ProcessRunning -and !$CtrlCPressed) {
-        if ($Process.HasExited) {
-            $ProcessRunning = $false
-            $ExitCode = $Process.ExitCode
-        } else {
-            Start-Sleep -Milliseconds 500  # Check every 500ms
-        }
-    }
-    
-    # Handle CTRL+C termination
-    if ($CtrlCPressed) {
-        Write-Host "Terminating training process (PID: $($Process.Id))..." -ForegroundColor Yellow
-        try {
+    if ($MaxTrainingTime -gt 0) {
+        $TimeoutMs = $MaxTrainingTime * 60 * 1000  # Convert minutes to milliseconds
+        Write-Host "Training will timeout after $MaxTrainingTime minutes" -ForegroundColor Yellow
+        $Process.WaitForExit($TimeoutMs)
+        
+        if (!$Process.HasExited) {
+            Write-Host "`nTraining timeout reached! Terminating process..." -ForegroundColor Yellow
+            Write-Host "Process ID: $($Process.Id)" -ForegroundColor Yellow
+            
             # Try graceful termination first
-            if (!$Process.HasExited) {
+            try {
                 $Process.CloseMainWindow()
                 Start-Sleep -Seconds 2
+            } catch {
+                Write-Host "CloseMainWindow failed: $_" -ForegroundColor Yellow
             }
             
             # Force kill if still running
             if (!$Process.HasExited) {
-                Write-Host "Force terminating training process..." -ForegroundColor Red
-                $Process.Kill()
-                $Process.WaitForExit(5000)  # Wait up to 5 seconds for cleanup
+                Write-Host "Force killing process..." -ForegroundColor Red
+                try {
+                    $Process.Kill()
+                    $Process.WaitForExit(5000)  # Wait up to 5 seconds for cleanup
+                } catch {
+                    Write-Host "Kill failed: $_" -ForegroundColor Red
+                }
             }
             
-            Write-Host "Training process terminated by user." -ForegroundColor Yellow
+            # Double-check if process is still running
+            if (!$Process.HasExited) {
+                Write-Host "Process still running! Using taskkill..." -ForegroundColor Red
+                try {
+                    & taskkill /F /PID $Process.Id
+                    Start-Sleep -Seconds 1
+                } catch {
+                    Write-Host "taskkill failed: $_" -ForegroundColor Red
+                }
+            }
+            
             $ExitCode = -1
+        } else {
+            $ExitCode = $Process.ExitCode
         }
-        catch {
-            Write-Warning "Error terminating process: $($_.Exception.Message)"
-        }
-    }
-    elseif ($ExitCode -eq 0) {
-        Write-Host "`nTraining completed successfully!" -ForegroundColor Green
     } else {
-        Write-Host "`nTraining ended with exit code: $ExitCode" -ForegroundColor Yellow
+        $Process.WaitForExit()
+        $ExitCode = $Process.ExitCode
     }
-}
-catch {
-    Write-Error "Failed to start training process: $($_.Exception.Message)"
+    
+    # Final verification
+    if ($MaxTrainingTime -gt 0 -and $ExitCode -eq -1) {
+        # Check if process is actually terminated
+        try {
+            $ProcessInfo = Get-Process -Id $Process.Id -ErrorAction SilentlyContinue
+            if ($ProcessInfo) {
+                Write-Host "`nWARNING: Process $($Process.Id) is still running!" -ForegroundColor Red
+                Write-Host "You may need to manually kill it with: taskkill /F /PID $($Process.Id)" -ForegroundColor Red
+            } else {
+                Write-Host "`nProcess successfully terminated" -ForegroundColor Green
+            }
+        } catch {
+            Write-Host "`nProcess appears to be terminated" -ForegroundColor Green
+        }
+    }
+    
+    if ($ExitCode -eq 0) {
+        Write-Host "`nTraining completed successfully!" -ForegroundColor Green
+    } elseif ($ExitCode -eq -1) {
+        Write-Host "`nTraining terminated due to timeout" -ForegroundColor Yellow
+    } else {
+        Write-Host "`nTraining completed with exit code: $ExitCode" -ForegroundColor Yellow
+    }
+    
+} catch {
+    Write-Error "Failed to start training: $_"
     exit 1
-}
-finally {
+} finally {
     # Return to original directory
     Pop-Location
 }
