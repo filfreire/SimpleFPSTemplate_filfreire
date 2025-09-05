@@ -8,6 +8,7 @@
 #include "LearningAgentsPPOTrainer.h"
 #include "LearningAgentsCommunicator.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "FPSCharacter.h"
 #include "Engine/Engine.h"
 #include "AIController.h"
@@ -30,6 +31,18 @@ AFPSCharacterManager::AFPSCharacterManager()
 	{
 		RunMode = EFPSCharacterManagerMode::Training;
 		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode to Training: %d"), (int32)RunMode);
+		
+		// Parse max training episodes from command line (e.g., -MaxTrainingEpisodes=1000)
+		FString MaxEpisodesStr;
+		if (FParse::Value(*CommandLine, TEXT("-MaxTrainingEpisodes="), MaxEpisodesStr))
+		{
+			MaxTrainingEpisodes = FCString::Atoi(*MaxEpisodesStr);
+			UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Max training episodes set from command line: %d"), MaxTrainingEpisodes);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: No MaxTrainingEpisodes found in command line: %s"), *CommandLine);
+		}
 	}
 	else
 	{
@@ -553,6 +566,33 @@ void AFPSCharacterManager::Tick(float DeltaTime)
 		if (PPOTrainer != nullptr)
 		{
 			PPOTrainer->RunTraining(TrainingSettings, TrainingGameSettings, true, true);
+			
+			// Increment training episode counter
+			CurrentTrainingEpisodes++;
+			
+			// Debug logging every 100 episodes to see if counting is working
+			if (CurrentTrainingEpisodes % 100 == 0)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: DEBUG - Training episode %d, MaxEpisodes: %d"), 
+					CurrentTrainingEpisodes, MaxTrainingEpisodes);
+			}
+			
+			// Check if we've reached the maximum training episodes
+			if (MaxTrainingEpisodes > 0 && CurrentTrainingEpisodes >= MaxTrainingEpisodes)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Reached maximum training episodes (%d). Exiting application."), MaxTrainingEpisodes);
+				
+				// Save any pending data before exit
+				if (PPOTrainer != nullptr)
+				{
+					PPOTrainer->SaveSnapshot();
+					UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Saved final training snapshot."));
+				}
+				
+				// Exit the application gracefully
+				UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
+				return;
+			}
 		}
 		else
 		{

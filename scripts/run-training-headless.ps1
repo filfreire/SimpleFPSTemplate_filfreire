@@ -8,7 +8,7 @@ param(
     [string]$MapName = "P_LearningAgentsTrial1",  # Default learning map
     [string]$LogFile = "fpscharacter_training.log",
     [string]$ExeName = "FPSGame.exe",
-    [int]$MaxTrainingTime = 0  # 0 = unlimited, otherwise minutes
+    [int]$MaxTrainingEpisodes = 0  # 0 = unlimited, otherwise number of training episodes (ticks)
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
@@ -64,9 +64,18 @@ $GameArgs = @(
     "-ini:Engine:[Core.Log]:LogPython=Verbose"  # Enable Python logging for Learning Agents
 )
 
-# Note: Timeout is handled by PowerShell, not Unreal Engine
-if ($MaxTrainingTime -gt 0) {
-    Write-Host "  Timeout: $MaxTrainingTime minutes (PowerShell managed)" -ForegroundColor White
+# Add MaxTrainingEpisodes parameter to game arguments
+if ($MaxTrainingEpisodes -gt 0) {
+    $GameArgs += "-MaxTrainingEpisodes=$MaxTrainingEpisodes"
+    Write-Host "  Max Training Episodes: $MaxTrainingEpisodes" -ForegroundColor White
+} else {
+    Write-Host "  Max Training Episodes: Unlimited" -ForegroundColor White
+}
+
+# Debug: Show all game arguments
+Write-Host "`nGame Arguments:" -ForegroundColor Cyan
+foreach ($arg in $GameArgs) {
+    Write-Host "  $arg" -ForegroundColor White
 }
 
 Write-Host "`nStarting headless training..." -ForegroundColor Green
@@ -85,72 +94,19 @@ try {
     Write-Host "You can monitor the log file in another terminal with:" -ForegroundColor Cyan
     Write-Host "  Get-Content -Path '$LogFile' -Wait" -ForegroundColor White
     
-    # Wait for the process to complete with optional timeout
+    # Wait for the process to complete
     Write-Host "`nWaiting for training to complete..." -ForegroundColor Yellow
     
-    if ($MaxTrainingTime -gt 0) {
-        $TimeoutMs = $MaxTrainingTime * 60 * 1000  # Convert minutes to milliseconds
-        Write-Host "Training will timeout after $MaxTrainingTime minutes" -ForegroundColor Yellow
-        $Process.WaitForExit($TimeoutMs)
-        
-        if (!$Process.HasExited) {
-            Write-Host "`nTraining timeout reached! Terminating process..." -ForegroundColor Yellow
-            Write-Host "Process ID: $($Process.Id)" -ForegroundColor Yellow
-            
-            # Try graceful termination first
-            try {
-                $Process.CloseMainWindow()
-                Start-Sleep -Seconds 2
-            } catch {
-                Write-Host "CloseMainWindow failed: $_" -ForegroundColor Yellow
-            }
-            
-            # Force kill if still running
-            if (!$Process.HasExited) {
-                Write-Host "Force killing process..." -ForegroundColor Red
-                try {
-                    $Process.Kill()
-                    $Process.WaitForExit(5000)  # Wait up to 5 seconds for cleanup
-                } catch {
-                    Write-Host "Kill failed: $_" -ForegroundColor Red
-                }
-            }
-            
-            # Double-check if process is still running
-            if (!$Process.HasExited) {
-                Write-Host "Process still running! Using taskkill..." -ForegroundColor Red
-                try {
-                    & taskkill /F /PID $Process.Id
-                    Start-Sleep -Seconds 1
-                } catch {
-                    Write-Host "taskkill failed: $_" -ForegroundColor Red
-                }
-            }
-            
-            $ExitCode = -1
-        } else {
-            $ExitCode = $Process.ExitCode
-        }
+    if ($MaxTrainingEpisodes -gt 0) {
+        Write-Host "Training will stop after $MaxTrainingEpisodes episodes (managed by Unreal Engine)" -ForegroundColor Green
     } else {
-        $Process.WaitForExit()
-        $ExitCode = $Process.ExitCode
+        Write-Host "Training will run indefinitely (Press Ctrl+C to stop)" -ForegroundColor Cyan
     }
     
-    # Final verification
-    if ($MaxTrainingTime -gt 0 -and $ExitCode -eq -1) {
-        # Check if process is actually terminated
-        try {
-            $ProcessInfo = Get-Process -Id $Process.Id -ErrorAction SilentlyContinue
-            if ($ProcessInfo) {
-                Write-Host "`nWARNING: Process $($Process.Id) is still running!" -ForegroundColor Red
-                Write-Host "You may need to manually kill it with: taskkill /F /PID $($Process.Id)" -ForegroundColor Red
-            } else {
-                Write-Host "`nProcess successfully terminated" -ForegroundColor Green
-            }
-        } catch {
-            Write-Host "`nProcess appears to be terminated" -ForegroundColor Green
-        }
-    }
+    # Let Unreal Engine handle termination, just wait for it to exit
+    $Process.WaitForExit()
+    $ExitCode = $Process.ExitCode
+    
     
     if ($ExitCode -eq 0) {
         Write-Host "`nTraining completed successfully!" -ForegroundColor Green
