@@ -26,11 +26,11 @@ AFPSCharacterManager::AFPSCharacterManager()
 	                          CommandLine.Contains(TEXT("-nullrhi")) || 
 	                          CommandLine.Contains(TEXT("-unattended"));
 	
-	// Only force training mode for headless training, allow Blueprint settings in editor
+	// Only force ReInitialize mode for headless training to ensure fresh neural network initialization
 	if (bIsHeadlessTraining)
 	{
-		RunMode = EFPSCharacterManagerMode::Training;
-		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode to Training: %d"), (int32)RunMode);
+		RunMode = EFPSCharacterManagerMode::ReInitialize;
+		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode to ReInitialize: %d"), (int32)RunMode);
 		
 	}
 	else
@@ -348,11 +348,11 @@ void AFPSCharacterManager::InitializeManager()
 	                          CommandLine.Contains(TEXT("-nullrhi")) || 
 	                          CommandLine.Contains(TEXT("-unattended"));
 	
-	// Only force Training mode for headless training, respect Blueprint settings in editor
-	if (bIsHeadlessTraining && RunMode != EFPSCharacterManagerMode::Training)
+	// Only force ReInitialize mode for headless training, respect Blueprint settings in editor
+	if (bIsHeadlessTraining && RunMode != EFPSCharacterManagerMode::ReInitialize)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode from %d to Training"), (int32)RunMode);
-		RunMode = EFPSCharacterManagerMode::Training;
+		UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Headless training detected, forcing RunMode from %d to ReInitialize"), (int32)RunMode);
+		RunMode = EFPSCharacterManagerMode::ReInitialize;
 	}
 	else if (!bIsHeadlessTraining)
 	{
