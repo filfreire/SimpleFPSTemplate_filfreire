@@ -7,7 +7,7 @@ param(
     [string]$TrainingBuildDir = "TrainingBuild",
     [string]$MapName = "P_LearningAgentsTrial1",  # Default learning map
     [string]$LogFile = "fpscharacter_training.log",
-    [string]$ExeName = "FPSGame.exe",
+    [string]$ExeName = "FPSGame.exe"
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
