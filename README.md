@@ -68,3 +68,9 @@ Download `https://cdn.unrealengine.com/CrossToolchain_Linux/v25_clang-18.1.0-roc
 Install and reboot.
 
 Run `./scripts/build-linux.ps1`
+
+### Random seed and timeout example
+
+```powershell
+.\scripts\run-training-headless.ps1 -RandomSeed 42 -LearningRatePolicy 0.0005 -EpsilonClip 0.1
+```

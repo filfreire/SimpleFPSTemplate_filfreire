@@ -1,6 +1,6 @@
 # Headless Training Launcher for FPSGame
 # This script launches the packaged game in headless mode for training
-# Usage: .\scripts\run-training-headless.ps1 [-TrainingBuildDir "TrainingBuild"] [-MapName "P_LearningAgentsTrial"] [-LogFile "training_log.log"]
+# Usage: .\scripts\run-training-headless.ps1 [-TrainingBuildDir "TrainingBuild"] [-MapName "P_LearningAgentsTrial"] [-LogFile "training_log.log"] [-TimeoutMinutes 30]
 
 param(
     [string]$ProjectPath = (Get-Location).Path,
@@ -18,7 +18,9 @@ param(
     [int]$NumberOfIterations = 1000000,
     [float]$DiscountFactor = 0.99,
     [float]$GaeLambda = 0.95,
-    [float]$ActionEntropyWeight = 0.0
+    [float]$ActionEntropyWeight = 0.0,
+    [int]$TimeoutMinutes = 0,       # 0 or negative => run indefinitely
+    [switch]$KillTreeOnTimeout = $true
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
@@ -42,6 +44,19 @@ Write-Host "  Number of Iterations: $NumberOfIterations" -ForegroundColor White
 Write-Host "  Discount Factor: $DiscountFactor" -ForegroundColor White
 Write-Host "  GAE Lambda: $GaeLambda" -ForegroundColor White
 Write-Host "  Action Entropy Weight: $ActionEntropyWeight" -ForegroundColor White
+
+# Helper function to kill process tree
+function Stop-ProcessTree {
+    param([int]$ProcessId)
+    try {
+        # /T kills the whole tree; /F is force
+        & taskkill /PID $ProcessId /T /F | Out-Null
+        return $true
+    } catch {
+        Write-Warning "Failed to kill process tree for PID $ProcessId`: $($_.Exception.Message)"
+        return $false
+    }
+}
 
 # Find the executable
 $BuildPath = Join-Path $ProjectPath $TrainingBuildDir
@@ -121,20 +136,43 @@ try {
     Write-Host "You can monitor the log file in another terminal with:" -ForegroundColor Cyan
     Write-Host "  Get-Content -Path '$LogFile' -Wait" -ForegroundColor White
     
-    # Wait for the process to complete
+    # Wait for completion with optional timeout
     Write-Host "`nWaiting for training to complete..." -ForegroundColor Yellow
-    
-    Write-Host "Training will run indefinitely (Press Ctrl+C to stop)" -ForegroundColor Cyan
-    
-    # Let Unreal Engine handle termination, just wait for it to exit
-    $Process.WaitForExit()
-    $ExitCode = $Process.ExitCode
-    
-    
-    if ($ExitCode -eq 0) {
+
+    $timedOut = $false
+    if ($TimeoutMinutes -gt 0) {
+        $ms = [int]($TimeoutMinutes * 60 * 1000)
+        Write-Host "Timeout set to $TimeoutMinutes minute(s)..." -ForegroundColor Cyan
+        $exitedInTime = $Process.WaitForExit($ms)
+        if (-not $exitedInTime) {
+            $timedOut = $true
+            Write-Warning "Timeout hit. Attempting to terminate the training process tree (PID $($Process.Id))..."
+            if ($KillTreeOnTimeout) {
+                $ok = Stop-ProcessTree -ProcessId $Process.Id
+                if (-not $ok) {
+                    # Fallback: try stopping just the root if taskkill failed
+                    try { Stop-Process -Id $Process.Id -Force -ErrorAction Stop } catch {}
+                }
+            } else {
+                try { Stop-Process -Id $Process.Id -Force -ErrorAction Stop } catch {}
+            }
+            # Give the OS a moment to tear down children
+            Start-Sleep -Seconds 2
+        }
+    } else {
+        Write-Host "Training will run indefinitely (Press Ctrl+C to stop)" -ForegroundColor Cyan
+        $Process.WaitForExit()
+    }
+
+    # Determine exit code / messaging
+    $ExitCode = $null
+    try { $ExitCode = $Process.ExitCode } catch { $ExitCode = $null }
+
+    if ($timedOut) {
+        $ExitCode = -1
+        Write-Host "`nTraining **terminated due to timeout** after $TimeoutMinutes minute(s)." -ForegroundColor Yellow
+    } elseif ($ExitCode -eq 0) {
         Write-Host "`nTraining completed successfully!" -ForegroundColor Green
-    } elseif ($ExitCode -eq -1) {
-        Write-Host "`nTraining terminated due to timeout" -ForegroundColor Yellow
     } else {
         Write-Host "`nTraining completed with exit code: $ExitCode" -ForegroundColor Yellow
     }
