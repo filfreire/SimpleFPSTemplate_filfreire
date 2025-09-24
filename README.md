@@ -54,3 +54,17 @@ To package a game build for Win64 platform, r   un `.\scripts\Package.bat` on a 
 
 .\scripts\Package.bat $env:UNREAL_PATH (Get-Location).Path $env:PROJECT_NAME $env:TARGET_NAME $env:PACKAGE_FOLDER
 ```
+
+### Checking CUDA is setup
+
+```powershell
+.\Intermediate\PipInstall\Scripts\python.exe -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA version:', torch.version.cuda if torch.cuda.is_available() else 'N/A')"
+```
+
+### Installing clang unreal engine toolchain for Linux cross compilation
+
+Download `https://cdn.unrealengine.com/CrossToolchain_Linux/v25_clang-18.1.0-rockylinux8.exe`
+
+Install and reboot.
+
+Run `./scripts/build-linux.ps1`

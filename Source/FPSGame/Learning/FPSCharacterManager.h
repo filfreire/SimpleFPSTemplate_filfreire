@@ -79,6 +79,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Manager Settings")
 	int32 RandomSeed = 1234;
 
+
 	// Learning settings
 	UPROPERTY(EditAnywhere, Category = "Learning Settings")
 	FLearningAgentsPolicySettings PolicySettings;

@@ -104,5 +104,4 @@ if ($LASTEXITCODE -eq 0) {
     exit $LASTEXITCODE
 }
 
-Write-Host "Press any key to continue..." -ForegroundColor Cyan
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+Read-Host "Press Enter to continue"

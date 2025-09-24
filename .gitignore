@@ -80,3 +80,4 @@ DerivedDataCache/*
 enc_temp_folder
 
 Packaged/*
+TrainingBuild/*
