@@ -129,3 +129,4 @@ else
     echo -e "${RED}Editor build failed with exit code: $BUILD_EXIT_CODE${NC}"
     exit $BUILD_EXIT_CODE
 fi
+

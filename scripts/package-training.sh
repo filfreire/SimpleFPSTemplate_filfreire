@@ -240,6 +240,15 @@ if [ $PACKAGE_EXIT_CODE -eq 0 ]; then
     echo -e "${CYAN}======================================${NC}"
     echo -e "${CYAN}Training build location: $PACKAGE_FOLDER${NC}"
     
+    # Copy LearningAgents Python content for headless training
+    echo -e "\n${CYAN}Copying LearningAgents Python content...${NC}"
+    if "$PROJECT_PATH/scripts/copy-learning-agents-python.sh" --project-path "$PROJECT_PATH" --training-build-dir "$OUTPUT_DIR" --unreal-path "$UNREAL_PATH"; then
+        echo -e "${GREEN}LearningAgents Python content copied successfully!${NC}"
+    else
+        echo -e "${YELLOW}Warning: Failed to copy LearningAgents Python content${NC}"
+        echo -e "${YELLOW}You may need to copy it manually for headless training to work${NC}"
+    fi
+    
     # Try to find the executable
     EXE_FILES=$(find "$PACKAGE_FOLDER" -name "$TARGET" -type f 2>/dev/null)
     if [ -n "$EXE_FILES" ]; then
@@ -282,3 +291,4 @@ else
     echo -e "${RED}Packaging failed with exit code: $PACKAGE_EXIT_CODE${NC}"
     exit $PACKAGE_EXIT_CODE
 fi
+

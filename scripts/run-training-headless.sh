@@ -174,3 +174,4 @@ echo -e "${CYAN}  - Neural network snapshots in project Intermediate directory${
 echo -e "\n${GREEN}To view TensorBoard, run: ./scripts/run-tensorboard.sh${NC}"
 
 # Training session completed
+
