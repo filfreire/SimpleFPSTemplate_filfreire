@@ -79,8 +79,27 @@ else
     echo -e "${YELLOW}You can run: ./scripts/copy-learning-agents-python.sh${NC}"
 fi
 
-# Step 3: Provide configuration guidance
-echo -e "\n${GREEN}[3/4] Configuration Check${NC}"
+# Step 3: Verify TensorBoard availability
+echo -e "\n${GREEN}[3/5] Verifying TensorBoard availability...${NC}"
+PYTHON_EXE="$PROJECT_PATH/Intermediate/PipInstall/bin/python"
+TENSORBOARD_EXE="$PROJECT_PATH/Intermediate/PipInstall/bin/tensorboard"
+
+if [ -f "$PYTHON_EXE" ]; then
+    echo -e "${GREEN}✓ Learning Agents Python environment found${NC}"
+else
+    echo -e "${YELLOW}⚠ Learning Agents Python environment not found${NC}"
+    echo -e "${GRAY}This may indicate that the build step failed to install dependencies${NC}"
+fi
+
+if [ -f "$TENSORBOARD_EXE" ]; then
+    echo -e "${GREEN}✓ TensorBoard is available${NC}"
+else
+    echo -e "${YELLOW}⚠ TensorBoard not found, but this should be installed automatically${NC}"
+    echo -e "${GRAY}TensorBoard should be available after Learning Agents dependencies are installed${NC}"
+fi
+
+# Step 4: Provide configuration guidance
+echo -e "\n${GREEN}[4/5] Configuration Check${NC}"
 echo -e "${CYAN}======================================${NC}"
 
 echo -e "${YELLOW}Please verify the following configuration in Unreal Editor:${NC}"
@@ -118,30 +137,6 @@ else
     CONFIG_COMPLETE=true
 fi
 
-# Step 4: Install TensorBoard (optional)
-echo -e "\n${GREEN}[4/5] TensorBoard Installation (Optional)${NC}"
-echo -e "${CYAN}======================================${NC}"
-
-echo -e "${YELLOW}TensorBoard is useful for monitoring training progress.${NC}"
-echo -e "${YELLOW}Would you like to install TensorBoard now? (y/N)${NC}"
-read -r install_tensorboard
-
-if [[ $install_tensorboard =~ ^[Yy]$ ]]; then
-    echo -e "\n${CYAN}Installing TensorBoard...${NC}"
-    if "$PROJECT_PATH/scripts/install-tensorboard.sh" --project-path "$PROJECT_PATH"; then
-        echo -e "${GREEN}TensorBoard installed successfully!${NC}"
-        TENSORBOARD_INSTALLED=true
-    else
-        echo -e "${YELLOW}TensorBoard installation failed, but you can install it manually later${NC}"
-        echo -e "${YELLOW}Run: ./scripts/install-tensorboard.sh${NC}"
-        TENSORBOARD_INSTALLED=false
-    fi
-else
-    echo -e "${YELLOW}Skipping TensorBoard installation${NC}"
-    echo -e "${YELLOW}You can install it later with: ./scripts/install-tensorboard.sh${NC}"
-    TENSORBOARD_INSTALLED=false
-fi
-
 # Step 5: Ready to train
 echo -e "\n${GREEN}[5/5] Training Setup Complete${NC}"
 echo -e "${CYAN}======================================${NC}"
@@ -152,13 +147,9 @@ if [ "$CONFIG_COMPLETE" = true ]; then
     echo -e "${WHITE}  ./scripts/run-training-headless.sh${NC}"
     
     echo -e "\n${CYAN}Optional monitoring commands:${NC}"
-    if [ "$TENSORBOARD_INSTALLED" = true ]; then
-        echo -e "${GRAY}  # Start TensorBoard (in another terminal)${NC}"
-        echo -e "${WHITE}  ./scripts/run-tensorboard.sh${NC}"
-    else
-        echo -e "${GRAY}  # Install and start TensorBoard (in another terminal)${NC}"
-        echo -e "${WHITE}  ./scripts/install-tensorboard.sh && ./scripts/run-tensorboard.sh${NC}"
-    fi
+    echo -e "${GRAY}  # Start TensorBoard (in another terminal)${NC}"
+    echo -e "${WHITE}  ./scripts/run-tensorboard.sh${NC}"
+    echo -e "${GRAY}  # TensorBoard will be available at: http://localhost:6006${NC}"
     echo -e "\n${GRAY}  # Monitor training logs (in another terminal)${NC}"
     echo -e "${WHITE}  cd TrainingBuild/Linux/FPSGame/Binaries/Linux${NC}"
     echo -e "${WHITE}  tail -f scharacter_training.log${NC}"
