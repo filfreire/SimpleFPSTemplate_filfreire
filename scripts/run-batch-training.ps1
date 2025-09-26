@@ -133,13 +133,104 @@ function Start-TrainingSession {
         if (-not $Process.HasExited -and $timer.ElapsedMilliseconds -ge $timeoutMs) {
             Write-Warning "Training session $SessionId timed out after $($timer.Elapsed.TotalMinutes.ToString('F1')) minutes"
             
-            # Enhanced process termination
-            Write-Host "Attempting to terminate PowerShell process (PID: $($Process.Id))..." -ForegroundColor Yellow
+            # Enhanced process termination - find and kill actual game processes
+            Write-Host "Attempting to terminate training processes..." -ForegroundColor Yellow
+            
+            # First, try to find and kill the actual game executable processes
+            $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
+            if ($GameProcesses) {
+                Write-Host "Found $($GameProcesses.Count) FPSGame.exe process(es)" -ForegroundColor Cyan
+                foreach ($GameProc in $GameProcesses) {
+                    Write-Host "Terminating FPSGame.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
+                    
+                    # Method 1: Use taskkill with /T flag to kill process tree
+                    $taskkillResult = & taskkill /PID $GameProc.Id /T /F 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "taskkill /T /F succeeded for PID $($GameProc.Id)" -ForegroundColor Green
+                    } else {
+                        Write-Warning "taskkill /T /F failed for PID $($GameProc.Id): $taskkillResult"
+                        
+                        # Method 2: Fallback - try to kill child processes manually
+                        Write-Host "Attempting manual child process termination..." -ForegroundColor Yellow
+                        try {
+                            $childProcesses = Get-WmiObject Win32_Process | Where-Object { $_.ParentProcessId -eq $GameProc.Id }
+                            foreach ($child in $childProcesses) {
+                                Write-Host "Killing child process: $($child.ProcessName) (PID: $($child.ProcessId))" -ForegroundColor Gray
+                                & taskkill /PID $child.ProcessId /F 2>$null
+                            }
+                            
+                            # Now try to kill the main process again
+                            & taskkill /PID $GameProc.Id /F 2>$null
+                            Write-Host "Manual termination attempt completed for PID $($GameProc.Id)" -ForegroundColor Yellow
+                        } catch {
+                            Write-Warning "Manual child process termination failed: $($_.Exception.Message)"
+                        }
+                    }
+                }
+            } else {
+                Write-Host "No FPSGame.exe processes found" -ForegroundColor Yellow
+            }
+            
+            # Also terminate the PowerShell wrapper process
+            Write-Host "Terminating PowerShell wrapper process (PID: $($Process.Id))..." -ForegroundColor Yellow
             try { 
                 Stop-Process -Id $Process.Id -Force -ErrorAction Stop
                 Write-Host "PowerShell process terminated successfully" -ForegroundColor Green
             } catch {
                 Write-Warning "Failed to terminate PowerShell process: $($_.Exception.Message)"
+            }
+            
+            # Give processes time to terminate
+            Start-Sleep -Seconds 3
+            
+            # Verify termination with multiple attempts
+            $maxVerificationAttempts = 3
+            $verificationAttempt = 0
+            $allProcessesTerminated = $false
+            
+            while ($verificationAttempt -lt $maxVerificationAttempts -and -not $allProcessesTerminated) {
+                $verificationAttempt++
+                Write-Host "Verification attempt $verificationAttempt/$maxVerificationAttempts..." -ForegroundColor Cyan
+                
+                $RemainingGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
+                if ($RemainingGameProcesses) {
+                    Write-Warning "Warning: $($RemainingGameProcesses.Count) FPSGame.exe process(es) still running"
+                    
+                    # Try one more aggressive termination attempt
+                    foreach ($remainingProc in $RemainingGameProcesses) {
+                        Write-Host "Force killing remaining process PID $($remainingProc.Id)..." -ForegroundColor Red
+                        try {
+                            # Try multiple termination methods
+                            & taskkill /PID $remainingProc.Id /F 2>$null
+                            Start-Sleep -Milliseconds 500
+                            
+                            # If still running, try PowerShell Stop-Process
+                            $stillRunning = Get-Process -Id $remainingProc.Id -ErrorAction SilentlyContinue
+                            if ($stillRunning) {
+                                Stop-Process -Id $remainingProc.Id -Force -ErrorAction Stop
+                            }
+                        } catch {
+                            Write-Warning "Failed to terminate remaining process PID $($remainingProc.Id): $($_.Exception.Message)"
+                        }
+                    }
+                    
+                    Start-Sleep -Seconds 2
+                } else {
+                    $allProcessesTerminated = $true
+                    Write-Host "All FPSGame.exe processes successfully terminated" -ForegroundColor Green
+                }
+            }
+            
+            # Final verification
+            $FinalGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
+            if ($FinalGameProcesses) {
+                Write-Error "CRITICAL: $($FinalGameProcesses.Count) FPSGame.exe process(es) still running after all termination attempts!"
+                Write-Error "Manual intervention may be required to terminate these processes."
+                foreach ($proc in $FinalGameProcesses) {
+                    Write-Error "  - PID: $($proc.Id), ProcessName: $($proc.ProcessName)"
+                }
+            } else {
+                Write-Host "SUCCESS: All FPSGame.exe processes confirmed terminated" -ForegroundColor Green
             }
             
             return "TIMEOUT"
