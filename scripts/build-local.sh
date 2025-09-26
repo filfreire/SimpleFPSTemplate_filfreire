@@ -131,6 +131,33 @@ BUILD_EXIT_CODE=$?
 
 if [ $BUILD_EXIT_CODE -eq 0 ]; then
     echo -e "${GREEN}Build completed successfully!${NC}"
+    
+    # Install Learning Agents dependencies for headless training
+    echo -e "${YELLOW}Installing Learning Agents dependencies...${NC}"
+    if [ -f "$PROJECT_PATH/scripts/install-learning-agents-deps.sh" ]; then
+        bash "$PROJECT_PATH/scripts/install-learning-agents-deps.sh" --unreal-path "$UNREAL_PATH" --project-path "$PROJECT_PATH"
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}Learning Agents dependencies installed successfully!${NC}"
+        else
+            echo -e "${YELLOW}Learning Agents dependency installation failed, but build completed${NC}"
+        fi
+    else
+        echo -e "${YELLOW}Learning Agents dependency script not found, skipping...${NC}"
+    fi
+    
+    # Install TensorBoard dependencies
+    echo -e "${YELLOW}Installing TensorBoard dependencies...${NC}"
+    if [ -f "$PROJECT_PATH/scripts/install-tensorboard.sh" ]; then
+        bash "$PROJECT_PATH/scripts/install-tensorboard.sh" --unreal-path "$UNREAL_PATH" --project-path "$PROJECT_PATH"
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}TensorBoard dependencies installed successfully!${NC}"
+        else
+            echo -e "${YELLOW}TensorBoard dependency installation failed, but build completed${NC}"
+        fi
+    else
+        echo -e "${YELLOW}TensorBoard dependency script not found, skipping...${NC}"
+    fi
+    
     exit 0
 else
     echo -e "${RED}Build failed with exit code: $BUILD_EXIT_CODE${NC}"

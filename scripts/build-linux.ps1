@@ -51,6 +51,32 @@ try {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Linux build completed successfully!" -ForegroundColor Green
         Write-Host "Binary location: $ProjectPath\Binaries\Linux\FPSGame-Linux-$Configuration" -ForegroundColor Cyan
+        
+        # Install Learning Agents dependencies for headless training
+        Write-Host "`nInstalling Learning Agents dependencies..." -ForegroundColor Yellow
+        try {
+            & "$ProjectPath\scripts\install-learning-agents-deps.ps1" -UnrealPath $UnrealPath -ProjectPath $ProjectPath
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Learning Agents dependencies installed successfully!" -ForegroundColor Green
+            } else {
+                Write-Warning "Learning Agents dependency installation failed, but build completed"
+            }
+        } catch {
+            Write-Warning "Failed to install Learning Agents dependencies: $_"
+        }
+        
+        # Install TensorBoard dependencies
+        Write-Host "`nInstalling TensorBoard dependencies..." -ForegroundColor Yellow
+        try {
+            & "$ProjectPath\scripts\install-tensorboard.ps1" -UnrealPath $UnrealPath -ProjectPath $ProjectPath
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "TensorBoard dependencies installed successfully!" -ForegroundColor Green
+            } else {
+                Write-Warning "TensorBoard dependency installation failed, but build completed"
+            }
+        } catch {
+            Write-Warning "Failed to install TensorBoard dependencies: $_"
+        }
     } else {
         Write-Error "Linux build failed with exit code: $LASTEXITCODE"
         exit $LASTEXITCODE
