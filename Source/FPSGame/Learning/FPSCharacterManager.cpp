@@ -180,9 +180,9 @@ AFPSCharacterManager::AFPSCharacterManager()
 	{
 		EnginePath = TEXT("C:/unreal/UE_5.6/Engine");
 	}
-	else if (HostName == TEXT("filfreire02"))
+	else if (HostName == TEXT("desktop-doap6m9"))
 	{
-		EnginePath = TEXT("D:/unreal/UE_5.6/Engine");
+		EnginePath = TEXT("E:/unreal/UE_5.6/Engine");
 	}
 	else
 	{
@@ -195,7 +195,7 @@ AFPSCharacterManager::AFPSCharacterManager()
 			TEXT("C:/Program Files/Epic Games/UE_5.6/Engine"),
 			TEXT("C:/Program Files (x86)/Epic Games/UE_5.6/Engine"),
 			TEXT("C:/unreal/UE_5.6/Engine"),
-			TEXT("D:/unreal/UE_5.6/Engine"),
+			TEXT("E:/unreal/UE_5.6/Engine"),
 			ProgramFiles + TEXT("/Epic Games/UE_5.6/Engine"),
 			ProgramFilesX86 + TEXT("/Epic Games/UE_5.6/Engine")
 		};

@@ -74,10 +74,10 @@ if ([string]::IsNullOrEmpty($UnrealPath)) {
     $hostname = [System.Net.Dns]::GetHostName()
     if ($hostname -eq "filfreire01") {
         $UnrealPath = "C:\unreal\UE_5.6"
-    } elseif ($hostname -eq "filfreire02") {
-        $UnrealPath = "D:\unreal\UE_5.6"
+    } elseif ($hostname -eq "desktop-doap6m9") {
+        $UnrealPath = "E:\unreal\UE_5.6"
     } else {
-        # Default path if hostname is neither filfreire01 nor filfreire02
+        # Default path if hostname is neither filfreire01 nor desktop-doap6m9
         $UnrealPath = "C:\unreal\UE_5.6"
     }
 }
