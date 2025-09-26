@@ -141,10 +141,32 @@ function Copy-TrainingResults {
     
     if ($Status -eq "SUCCESS" -or $Status -eq "TIMEOUT") {
         # Copy log file
-        $SourceLog = Join-Path (Join-Path $ProjectPath "TrainingBuild\Windows\FPSGame\Binaries\Win64") "training_seed_$Seed.log"
+        $SourceLog = Join-Path (Join-Path $ProjectPath "TrainingBuild\Windows\FPSGame\Saved\Logs") "training_seed_$Seed.log"
         $DestLog = Join-Path $LogsDir "training_seed_$Seed.log"
+        
+        Write-Host "Attempting to copy log file for seed $Seed..." -ForegroundColor Cyan
+        Write-Host "Source: $SourceLog" -ForegroundColor Gray
+        Write-Host "Destination: $DestLog" -ForegroundColor Gray
+        
         if (Test-Path $SourceLog) {
             Copy-Item $SourceLog $DestLog -Force
+            Write-Host "Copied log file: $SourceLog -> $DestLog" -ForegroundColor Green
+        } else {
+            Write-Warning "Log file not found: $SourceLog"
+            # Check if the directory exists
+            $LogDir = Split-Path $SourceLog -Parent
+            if (Test-Path $LogDir) {
+                Write-Host "Log directory exists: $LogDir" -ForegroundColor Yellow
+                $AvailableLogs = Get-ChildItem $LogDir -Filter "*.log" | Select-Object Name
+                if ($AvailableLogs) {
+                    Write-Host "Available log files:" -ForegroundColor Yellow
+                    $AvailableLogs | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
+                } else {
+                    Write-Host "No .log files found in directory" -ForegroundColor Yellow
+                }
+            } else {
+                Write-Host "Log directory does not exist: $LogDir" -ForegroundColor Red
+            }
         }
         
         # Copy TensorBoard runs

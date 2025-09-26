@@ -150,10 +150,12 @@ Write-Host "`nExecuting command:" -ForegroundColor Gray
 Write-Host "$ExeName $($GameArgs -join ' ')" -ForegroundColor Gray
 
 try {
-    # Start the training process (hidden window)
-    $Process = Start-Process -FilePath $GameExecutable -ArgumentList $GameArgs -WindowStyle Hidden -PassThru
+    # Start the training process (use different window style based on environment)
+    $WindowStyle = if ($env:SSH_CLIENT -or $env:SSH_TTY) { "Normal" } else { "Hidden" }
+    $Process = Start-Process -FilePath $GameExecutable -ArgumentList $GameArgs -WindowStyle $WindowStyle -PassThru
     
     Write-Host "`nTraining process started with PID: $($Process.Id)" -ForegroundColor Green
+    Write-Host "Window style: $WindowStyle (SSH detected: $($env:SSH_CLIENT -or $env:SSH_TTY))" -ForegroundColor Cyan
     Write-Host "You can monitor the log file in another terminal with:" -ForegroundColor Cyan
     Write-Host "  Get-Content -Path '$LogFile' -Wait" -ForegroundColor White
     
@@ -164,8 +166,31 @@ try {
     if ($TimeoutMinutes -gt 0) {
         $ms = [int]($TimeoutMinutes * 60 * 1000)
         Write-Host "Timeout set to $TimeoutMinutes minute(s)..." -ForegroundColor Cyan
-        $exitedInTime = $Process.WaitForExit($ms)
-        if (-not $exitedInTime) {
+        
+        # Use a more robust timeout mechanism for SSH environments
+        $timeoutReached = $false
+        $job = Start-Job -ScriptBlock {
+            param($procId, $timeoutMs)
+            $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
+            if ($proc) {
+                $proc.WaitForExit($timeoutMs)
+                return $proc.HasExited
+            }
+            return $true
+        } -ArgumentList $Process.Id, $ms
+        
+        try {
+            $exitedInTime = $job | Wait-Job -Timeout ($TimeoutMinutes * 60 + 10) | Receive-Job
+            if (-not $exitedInTime) {
+                $timeoutReached = $true
+            }
+        } catch {
+            $timeoutReached = $true
+        } finally {
+            Remove-Job $job -Force -ErrorAction SilentlyContinue
+        }
+        
+        if ($timeoutReached) {
             $timedOut = $true
             Write-Warning "Timeout hit. Attempting to terminate the training process tree (PID $($Process.Id))..."
             if ($KillTreeOnTimeout) {
