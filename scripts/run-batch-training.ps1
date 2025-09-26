@@ -99,7 +99,7 @@ function Start-TrainingSession {
             "-RandomSeed", $Seed,
             "-LogFile", $LogFile,
             "-TimeoutMinutes", $TimeoutMinutes,
-            "-UseObstacles", $UseObstacles,
+            "-UseObstacles", $UseObstacles.ToString().ToLower(),
             "-MaxObstacles", $MaxObstacles,
             "-MinObstacleSize", $MinObstacleSize,
             "-MaxObstacleSize", $MaxObstacleSize,

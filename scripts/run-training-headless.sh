@@ -9,6 +9,12 @@ TRAINING_BUILD_DIR="TrainingBuild"
 MAP_NAME="P_LearningAgentsTrial1"  # Default learning map
 LOG_FILE="scharacter_training.log"
 EXE_NAME="FPSGame"
+# Obstacle configuration parameters
+USE_OBSTACLES=false
+MAX_OBSTACLES=8
+MIN_OBSTACLE_SIZE=100.0
+MAX_OBSTACLE_SIZE=300.0
+OBSTACLE_MODE="Static"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -29,6 +35,26 @@ while [[ $# -gt 0 ]]; do
             EXE_NAME="$2"
             shift 2
             ;;
+        --use-obstacles)
+            USE_OBSTACLES="$2"
+            shift 2
+            ;;
+        --max-obstacles)
+            MAX_OBSTACLES="$2"
+            shift 2
+            ;;
+        --min-obstacle-size)
+            MIN_OBSTACLE_SIZE="$2"
+            shift 2
+            ;;
+        --max-obstacle-size)
+            MAX_OBSTACLE_SIZE="$2"
+            shift 2
+            ;;
+        --obstacle-mode)
+            OBSTACLE_MODE="$2"
+            shift 2
+            ;;
         -h|--help)
             echo "Usage: $0 [options]"
             echo "Options:"
@@ -36,6 +62,11 @@ while [[ $# -gt 0 ]]; do
             echo "  --map-name MAP              Map name to load (default: P_LearningAgentsTrial1)"
             echo "  --log-file FILE             Log file name (default: scharacter_training.log)"
             echo "  --exe-name NAME             Executable name (default: FPSGame)"
+            echo "  --use-obstacles BOOL        Enable/disable obstacles (default: false)"
+            echo "  --max-obstacles NUM         Maximum number of obstacles (default: 8)"
+            echo "  --min-obstacle-size SIZE    Minimum obstacle size (default: 100.0)"
+            echo "  --max-obstacle-size SIZE    Maximum obstacle size (default: 300.0)"
+            echo "  --obstacle-mode MODE         Obstacle mode: Static or Dynamic (default: Static)"
             echo "  -h, --help                  Show this help message"
             exit 0
             ;;
@@ -93,6 +124,13 @@ echo -e "${WHITE}  Headless Training: Enabled (forces Training mode)${NC}"
 echo -e "${WHITE}  Null RHI: Enabled (no rendering)${NC}"
 echo -e "${WHITE}  No Sound: Enabled${NC}"
 echo -e "${WHITE}  Logging: Enabled to $LOG_FILE${NC}"
+echo -e ""
+echo -e "${CYAN}Obstacle Configuration:${NC}"
+echo -e "${WHITE}  Use Obstacles: $USE_OBSTACLES${NC}"
+echo -e "${WHITE}  Max Obstacles: $MAX_OBSTACLES${NC}"
+echo -e "${WHITE}  Min Obstacle Size: $MIN_OBSTACLE_SIZE${NC}"
+echo -e "${WHITE}  Max Obstacle Size: $MAX_OBSTACLE_SIZE${NC}"
+echo -e "${WHITE}  Obstacle Mode: $OBSTACLE_MODE${NC}"
 
 # Build command line arguments for headless training
 GAME_ARGS=(
@@ -108,6 +146,11 @@ GAME_ARGS=(
     "-NoLoadStartupPackages"       # Skip loading startup packages for faster boot
     "-FORCELOGFLUSH"               # Force log flushing for real-time monitoring
     "-ini:Engine:[Core.Log]:LogPython=Verbose"  # Enable Python logging for Learning Agents
+    "-UseObstacles=$USE_OBSTACLES"  # Enable/disable obstacles
+    "-MaxObstacles=$MAX_OBSTACLES"  # Maximum number of obstacles
+    "-MinObstacleSize=$MIN_OBSTACLE_SIZE"  # Minimum obstacle size
+    "-MaxObstacleSize=$MAX_OBSTACLE_SIZE"  # Maximum obstacle size
+    "-ObstacleMode=$OBSTACLE_MODE"  # Obstacle mode (Static/Dynamic)
 )
 
 # Debug: Show all game arguments

@@ -22,12 +22,15 @@ param(
     [int]$TimeoutMinutes = 0,       # 0 or negative => run indefinitely
     [switch]$KillTreeOnTimeout = $true,
     # Obstacle configuration parameters
-    [bool]$UseObstacles = $true,
+    [string]$UseObstacles = "true",
     [int]$MaxObstacles = 8,
     [float]$MinObstacleSize = 100.0,
     [float]$MaxObstacleSize = 300.0,
     [string]$ObstacleMode = "Static"  # "Static" or "Dynamic"
 )
+
+# Convert string parameters to appropriate types
+$UseObstaclesBool = $UseObstacles -eq "true" -or $UseObstacles -eq "True" -or $UseObstacles -eq "1"
 
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "FPSGAME HEADLESS TRAINING" -ForegroundColor Green
@@ -52,7 +55,7 @@ Write-Host "  GAE Lambda: $GaeLambda" -ForegroundColor White
 Write-Host "  Action Entropy Weight: $ActionEntropyWeight" -ForegroundColor White
 Write-Host ""
 Write-Host "Obstacle Configuration:" -ForegroundColor Cyan
-Write-Host "  Use Obstacles: $UseObstacles" -ForegroundColor White
+Write-Host "  Use Obstacles: $UseObstaclesBool" -ForegroundColor White
 Write-Host "  Max Obstacles: $MaxObstacles" -ForegroundColor White
 Write-Host "  Min Obstacle Size: $MinObstacleSize" -ForegroundColor White
 Write-Host "  Max Obstacle Size: $MaxObstacleSize" -ForegroundColor White
@@ -124,7 +127,7 @@ $GameArgs = @(
     "-DiscountFactor=$DiscountFactor"  # Reward discount factor
     "-GaeLambda=$GaeLambda"  # GAE lambda parameter
     "-ActionEntropyWeight=$ActionEntropyWeight"  # Action entropy weight
-    "-UseObstacles=$UseObstacles"  # Enable/disable obstacles
+    "-UseObstacles=$UseObstaclesBool"  # Enable/disable obstacles
     "-MaxObstacles=$MaxObstacles"  # Maximum number of obstacles
     "-MinObstacleSize=$MinObstacleSize"  # Minimum obstacle size
     "-MaxObstacleSize=$MaxObstacleSize"  # Maximum obstacle size
