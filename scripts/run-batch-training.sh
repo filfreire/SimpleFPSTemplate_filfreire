@@ -223,10 +223,34 @@ copy_training_results() {
     
     if [ "$status" = "SUCCESS" ] || [ "$status" = "TIMEOUT" ]; then
         # Copy log file
-        local source_log="$PROJECT_PATH/$TRAINING_BUILD_DIR/Linux/$EXE_NAME/Binaries/Linux/training_seed_${seed}.log"
+        local source_log="$PROJECT_PATH/$TRAINING_BUILD_DIR/Linux/$EXE_NAME/Saved/Logs/training_seed_${seed}.log"
         local dest_log="$LOGS_DIR/training_seed_${seed}.log"
+        
+        echo -e "${CYAN}Attempting to copy log file for seed $seed...${NC}"
+        echo -e "${GRAY}Source: $source_log${NC}"
+        echo -e "${GRAY}Destination: $dest_log${NC}"
+        
         if [ -f "$source_log" ]; then
             cp "$source_log" "$dest_log"
+            echo -e "${GREEN}Copied log file: $source_log -> $dest_log${NC}"
+        else
+            echo -e "${YELLOW}Log file not found: $source_log${NC}"
+            # Check if the directory exists
+            local log_dir=$(dirname "$source_log")
+            if [ -d "$log_dir" ]; then
+                echo -e "${YELLOW}Log directory exists: $log_dir${NC}"
+                local available_logs=$(ls "$log_dir"/*.log 2>/dev/null | wc -l)
+                if [ "$available_logs" -gt 0 ]; then
+                    echo -e "${YELLOW}Available log files:${NC}"
+                    ls "$log_dir"/*.log 2>/dev/null | while read -r log_file; do
+                        echo -e "${GRAY}  - $(basename "$log_file")${NC}"
+                    done
+                else
+                    echo -e "${YELLOW}No .log files found in directory${NC}"
+                fi
+            else
+                echo -e "${RED}Log directory does not exist: $log_dir${NC}"
+            fi
         fi
         
         # Copy TensorBoard runs
@@ -270,9 +294,10 @@ for ((seed=START_SEED; seed<=END_SEED; seed++)); do
     
     # Track results
     case $status in
-        0) COMPLETED_RUNS+=($seed) ;;
-        1) FAILED_RUNS+=($seed) ;;
-        2) SKIPPED_RUNS+=($seed) ;;
+        0) COMPLETED_RUNS+=($seed) ;;  # SUCCESS
+        1) COMPLETED_RUNS+=($seed) ;;  # TIMEOUT - now treated as successful
+        2) SKIPPED_RUNS+=($seed) ;;   # SKIPPED
+        3) FAILED_RUNS+=($seed) ;;    # FAILED
     esac
     
     # Copy results
@@ -280,6 +305,7 @@ for ((seed=START_SEED; seed<=END_SEED; seed++)); do
         0) copy_training_results "$seed" "SUCCESS" ;;
         1) copy_training_results "$seed" "TIMEOUT" ;;
         2) copy_training_results "$seed" "SKIPPED" ;;
+        3) copy_training_results "$seed" "FAILED" ;;
     esac
     
     ((current_run++))
