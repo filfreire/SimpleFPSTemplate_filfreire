@@ -125,7 +125,8 @@ cd "$PROJECT_PATH" || exit 1
     -TargetPlatform="$TARGET_PLATFORM" \
     -Architecture="$ARCHITECTURE" \
     -Configuration="$BUILD_TYPE" \
-    -SkipEditorContent
+    -SkipEditorContent \
+    -AdditionalCookerOptions="-cookprocesscount=8 -fastcook"
 
 BUILD_EXIT_CODE=$?
 

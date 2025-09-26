@@ -197,11 +197,14 @@ fi
 
 echo -e "${CYAN}Starting packaging process for training...${NC}"
 echo -e "${YELLOW}This may take several minutes...${NC}"
+echo -e "${GRAY}Note: This script assumes the project is already built and cooked.${NC}"
+echo -e "${GRAY}Run './scripts/build-local.sh' first for optimal performance.${NC}"
 
 # Change to project directory
 cd "$PROJECT_PATH" || exit 1
 
 # Build the RunUAT command arguments for training build
+# Note: Assumes project is already built and cooked (run build-local.sh first)
 UAT_ARGS=(
     "BuildCookRun"
     "-project=\"$PROJECT_FILE\""
@@ -209,15 +212,9 @@ UAT_ARGS=(
     "-utf8output"
     "-nocompileeditor"
     "-skipbuildeditor"
-    "-cook"
-    "-project=\"$PROJECT_FILE\""
-    "-target=$TARGET"
-    "-platform=$PLATFORM"
-    "-installed"
     "-stage"
     "-archive"
     "-package"
-    "-build"
     "-pak"
     "-compressed"
     "-archivedirectory=\"$PACKAGE_FOLDER\""

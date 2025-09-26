@@ -4,7 +4,7 @@
 # Usage: ./scripts/setup-headless-training.sh [--skip-build] [--skip-package]
 
 # Default values
-SKIP_BUILD=false
+SKIP_BUILD=true  # Default to true since package scripts now assume pre-built project
 SKIP_PACKAGE=false
 PROJECT_PATH="$(pwd)"
 
@@ -19,11 +19,19 @@ while [[ $# -gt 0 ]]; do
             SKIP_PACKAGE=true
             shift
             ;;
+        --build)
+            SKIP_BUILD=false
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [--skip-build] [--skip-package]"
-            echo "  --skip-build     Skip the build step"
+            echo "Usage: $0 [--build] [--skip-package]"
+            echo "  --build          Include the build step (default: skip build)"
             echo "  --skip-package   Skip the packaging step"
             echo "  -h, --help       Show this help message"
+            echo ""
+            echo "Note: By default, this script skips building since package scripts"
+            echo "      now assume the project is already built and cooked."
+            echo "      Run './scripts/build-local.sh' first if you need to build."
             exit 0
             ;;
         *)
@@ -59,7 +67,8 @@ if [ "$SKIP_BUILD" = false ]; then
     fi
     echo -e "${GREEN}Build completed successfully${NC}"
 else
-    echo -e "${YELLOW}[1/4] Skipping build step${NC}"
+    echo -e "${YELLOW}[1/4] Skipping build step (assuming project is already built)${NC}"
+    echo -e "${GRAY}If you need to build, run: ./scripts/build-local.sh${NC}"
 fi
 
 # Step 2: Package for training (optional)

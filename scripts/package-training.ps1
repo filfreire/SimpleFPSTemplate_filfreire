@@ -117,8 +117,11 @@ if (-not (Test-Path $PackageFolder)) {
 
 Write-Host "Starting packaging process for training..." -ForegroundColor Cyan
 Write-Host "This may take several minutes..." -ForegroundColor Yellow
+Write-Host "Note: This script assumes the project is already built and cooked." -ForegroundColor Gray
+Write-Host "Run '.\scripts\build-local.ps1' first for optimal performance." -ForegroundColor Gray
 
 # Build the RunUAT command arguments for training build
+# Note: Assumes project is already built and cooked (run build-local.ps1 first)
 $UATArgs = @(
     "BuildCookRun"
     "-project=`"$ProjectFile`""
@@ -126,15 +129,9 @@ $UATArgs = @(
     "-utf8output"
     "-nocompileeditor"
     "-skipbuildeditor"
-    "-cook"
-    "-project=`"$ProjectFile`""
-    "-target=$Target"
-    "-platform=$Platform"
-    "-installed"
     "-stage"
     "-archive"
     "-package"
-    "-build"
     "-pak"
     "-compressed"
     "-archivedirectory=`"$PackageFolder`""
