@@ -108,12 +108,40 @@ function Start-TrainingSession {
         
         Write-Host "Training process started with PID: $($Process.Id)" -ForegroundColor Green
         
-        # Wait for completion with timeout
-        $ExitedInTime = $Process.WaitForExit($TimeoutMinutes * 60 * 1000)
+        # Wait for completion with timeout - use more robust approach for SSH
+        $timer = [System.Diagnostics.Stopwatch]::StartNew()
+        $timeoutMs = $TimeoutMinutes * 60 * 1000
+        $checkInterval = 5000  # Check every 5 seconds
         
-        if (-not $ExitedInTime) {
-            Write-Warning "Training session $SessionId timed out after $TimeoutMinutes minutes"
-            try { Stop-Process -Id $Process.Id -Force -ErrorAction Stop } catch {}
+        while (-not $Process.HasExited -and $timer.ElapsedMilliseconds -lt $timeoutMs) {
+            Start-Sleep -Milliseconds $checkInterval
+            
+            # Check if process is still running
+            try {
+                $proc = Get-Process -Id $Process.Id -ErrorAction Stop
+                if ($proc.HasExited) {
+                    break
+                }
+            } catch {
+                # Process no longer exists
+                break
+            }
+        }
+        
+        $timer.Stop()
+        
+        if (-not $Process.HasExited -and $timer.ElapsedMilliseconds -ge $timeoutMs) {
+            Write-Warning "Training session $SessionId timed out after $($timer.Elapsed.TotalMinutes.ToString('F1')) minutes"
+            
+            # Enhanced process termination
+            Write-Host "Attempting to terminate PowerShell process (PID: $($Process.Id))..." -ForegroundColor Yellow
+            try { 
+                Stop-Process -Id $Process.Id -Force -ErrorAction Stop
+                Write-Host "PowerShell process terminated successfully" -ForegroundColor Green
+            } catch {
+                Write-Warning "Failed to terminate PowerShell process: $($_.Exception.Message)"
+            }
+            
             return "TIMEOUT"
         }
         

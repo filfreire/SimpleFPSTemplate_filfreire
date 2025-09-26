@@ -221,20 +221,8 @@ AFPSCharacterManager::AFPSCharacterManager()
 		}
 	}
 #elif PLATFORM_LINUX
-	// Linux paths - adjust as needed for your installation
-	if (HostName == TEXT("filfreire01"))
-	{
-		EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
-	}
-	else if (HostName == TEXT("filfreire02"))
-	{
-		EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
-	}
-	else
-	{
-		// Default fallback for Linux
-		EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");
-	}
+	// Linux paths - use default path for all Linux systems
+	EnginePath = TEXT("/home/filipe/UE_5.6/Engine");
 #else
 	// Other platforms - use default Linux path
 	EnginePath = TEXT("/opt/unreal/UE_5.6/Engine");

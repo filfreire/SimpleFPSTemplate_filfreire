@@ -169,41 +169,96 @@ try {
         
         # Use a more robust timeout mechanism for SSH environments
         $timeoutReached = $false
-        $job = Start-Job -ScriptBlock {
-            param($procId, $timeoutMs)
-            $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
-            if ($proc) {
-                $proc.WaitForExit($timeoutMs)
-                return $proc.HasExited
-            }
-            return $true
-        } -ArgumentList $Process.Id, $ms
         
-        try {
-            $exitedInTime = $job | Wait-Job -Timeout ($TimeoutMinutes * 60 + 10) | Receive-Job
-            if (-not $exitedInTime) {
-                $timeoutReached = $true
+        # Create a timer-based approach that's more reliable in SSH
+        $timer = [System.Diagnostics.Stopwatch]::StartNew()
+        $checkInterval = 5000  # Check every 5 seconds
+        
+        while (-not $Process.HasExited -and $timer.ElapsedMilliseconds -lt $ms) {
+            Start-Sleep -Milliseconds $checkInterval
+            
+            # Check if process is still running
+            try {
+                $proc = Get-Process -Id $Process.Id -ErrorAction Stop
+                if ($proc.HasExited) {
+                    break
+                }
+            } catch {
+                # Process no longer exists
+                break
             }
-        } catch {
-            $timeoutReached = $true
-        } finally {
-            Remove-Job $job -Force -ErrorAction SilentlyContinue
         }
+        
+        # Check if we timed out
+        if (-not $Process.HasExited -and $timer.ElapsedMilliseconds -ge $ms) {
+            $timeoutReached = $true
+        }
+        
+        $timer.Stop()
         
         if ($timeoutReached) {
             $timedOut = $true
-            Write-Warning "Timeout hit. Attempting to terminate the training process tree (PID $($Process.Id))..."
+            Write-Warning "Timeout hit after $($timer.Elapsed.TotalMinutes.ToString('F1')) minutes. Attempting to terminate the training process tree (PID $($Process.Id))..."
+            
+            # Enhanced process termination for SSH environments
+            $terminationSuccess = $false
+            
             if ($KillTreeOnTimeout) {
+                # Try taskkill first (most effective for process trees)
+                Write-Host "Attempting to kill process tree with taskkill..." -ForegroundColor Yellow
                 $ok = Stop-ProcessTree -ProcessId $Process.Id
-                if (-not $ok) {
-                    # Fallback: try stopping just the root if taskkill failed
-                    try { Stop-Process -Id $Process.Id -Force -ErrorAction Stop } catch {}
+                if ($ok) {
+                    $terminationSuccess = $true
+                    Write-Host "Process tree terminated successfully with taskkill" -ForegroundColor Green
                 }
-            } else {
-                try { Stop-Process -Id $Process.Id -Force -ErrorAction Stop } catch {}
             }
-            # Give the OS a moment to tear down children
-            Start-Sleep -Seconds 2
+            
+            if (-not $terminationSuccess) {
+                # Fallback: try PowerShell Stop-Process
+                Write-Host "Attempting to kill process with PowerShell Stop-Process..." -ForegroundColor Yellow
+                try { 
+                    Stop-Process -Id $Process.Id -Force -ErrorAction Stop
+                    $terminationSuccess = $true
+                    Write-Host "Process terminated successfully with Stop-Process" -ForegroundColor Green
+                } catch {
+                    Write-Warning "Stop-Process failed: $($_.Exception.Message)"
+                }
+            }
+            
+            # Additional cleanup for stubborn processes
+            if (-not $terminationSuccess) {
+                Write-Host "Attempting additional cleanup methods..." -ForegroundColor Yellow
+                
+                # Try to find and kill child processes
+                try {
+                    $childProcesses = Get-WmiObject Win32_Process | Where-Object { $_.ParentProcessId -eq $Process.Id }
+                    foreach ($child in $childProcesses) {
+                        Write-Host "Killing child process: $($child.ProcessName) (PID: $($child.ProcessId))" -ForegroundColor Gray
+                        try { Stop-Process -Id $child.ProcessId -Force -ErrorAction Stop } catch {}
+                    }
+                } catch {
+                    Write-Warning "Failed to enumerate child processes: $($_.Exception.Message)"
+                }
+                
+                # Final attempt with taskkill /F
+                try {
+                    & taskkill /PID $Process.Id /F 2>$null
+                    Write-Host "Final cleanup attempt completed" -ForegroundColor Yellow
+                } catch {
+                    Write-Warning "Final cleanup attempt failed: $($_.Exception.Message)"
+                }
+            }
+            
+            # Give the OS time to clean up
+            Start-Sleep -Seconds 3
+            
+            # Verify termination
+            try {
+                $proc = Get-Process -Id $Process.Id -ErrorAction Stop
+                Write-Warning "Process $($Process.Id) is still running after termination attempts!"
+            } catch {
+                Write-Host "Process $($Process.Id) successfully terminated" -ForegroundColor Green
+            }
         }
     } else {
         Write-Host "Training will run indefinitely (Press Ctrl+C to stop)" -ForegroundColor Cyan
