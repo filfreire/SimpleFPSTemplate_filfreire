@@ -13,7 +13,13 @@ param(
     [string]$ExeName = "FPSGame.exe",
     [string]$ResultsDir = "BatchTrainingResults",
     [switch]$CleanupIntermediate = $false,
-    [switch]$SkipExisting = $true
+    [switch]$SkipExisting = $true,
+    # Obstacle configuration parameters
+    [bool]$UseObstacles = $true,
+    [int]$MaxObstacles = 8,
+    [float]$MinObstacleSize = 100.0,
+    [float]$MaxObstacleSize = 300.0,
+    [string]$ObstacleMode = "Static"  # "Static" or "Dynamic"
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
@@ -27,6 +33,13 @@ Write-Host "Concurrent runs: $ConcurrentRuns" -ForegroundColor Yellow
 Write-Host "Results directory: $ResultsDir" -ForegroundColor Yellow
 Write-Host "Cleanup intermediate: $CleanupIntermediate" -ForegroundColor Yellow
 Write-Host "Skip existing: $SkipExisting" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Obstacle Configuration:" -ForegroundColor Cyan
+Write-Host "  Use Obstacles: $UseObstacles" -ForegroundColor White
+Write-Host "  Max Obstacles: $MaxObstacles" -ForegroundColor White
+Write-Host "  Min Obstacle Size: $MinObstacleSize" -ForegroundColor White
+Write-Host "  Max Obstacle Size: $MaxObstacleSize" -ForegroundColor White
+Write-Host "  Obstacle Mode: $ObstacleMode" -ForegroundColor White
 
 # Create results directory
 $ResultsPath = Join-Path $ProjectPath $ResultsDir
@@ -85,7 +98,12 @@ function Start-TrainingSession {
             "-File", "scripts/run-training-headless.ps1",
             "-RandomSeed", $Seed,
             "-LogFile", $LogFile,
-            "-TimeoutMinutes", $TimeoutMinutes
+            "-TimeoutMinutes", $TimeoutMinutes,
+            "-UseObstacles", $UseObstacles,
+            "-MaxObstacles", $MaxObstacles,
+            "-MinObstacleSize", $MinObstacleSize,
+            "-MaxObstacleSize", $MaxObstacleSize,
+            "-ObstacleMode", $ObstacleMode
         ) -WindowStyle Hidden -PassThru -WorkingDirectory $ProjectPath
         
         Write-Host "Training process started with PID: $($Process.Id)" -ForegroundColor Green

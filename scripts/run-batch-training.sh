@@ -15,6 +15,12 @@ EXE_NAME="FPSGame"
 RESULTS_DIR="BatchTrainingResults"
 CLEANUP_INTERMEDIATE=false
 SKIP_EXISTING=true
+# Obstacle configuration parameters
+USE_OBSTACLES=true
+MAX_OBSTACLES=8
+MIN_OBSTACLE_SIZE=100.0
+MAX_OBSTACLE_SIZE=300.0
+OBSTACLE_MODE="Static"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -63,6 +69,26 @@ while [[ $# -gt 0 ]]; do
             SKIP_EXISTING=false
             shift
             ;;
+        --use-obstacles)
+            USE_OBSTACLES="$2"
+            shift 2
+            ;;
+        --max-obstacles)
+            MAX_OBSTACLES="$2"
+            shift 2
+            ;;
+        --min-obstacle-size)
+            MIN_OBSTACLE_SIZE="$2"
+            shift 2
+            ;;
+        --max-obstacle-size)
+            MAX_OBSTACLE_SIZE="$2"
+            shift 2
+            ;;
+        --obstacle-mode)
+            OBSTACLE_MODE="$2"
+            shift 2
+            ;;
         -h|--help)
             echo "Usage: $0 [options]"
             echo "Options:"
@@ -77,6 +103,11 @@ while [[ $# -gt 0 ]]; do
             echo "  --results-dir DIR           Results directory (default: BatchTrainingResults)"
             echo "  --cleanup-intermediate      Clean up intermediate files after each run"
             echo "  --no-skip-existing          Don't skip runs with existing log files"
+            echo "  --use-obstacles BOOL        Enable/disable obstacles (default: true)"
+            echo "  --max-obstacles NUM         Maximum number of obstacles (default: 8)"
+            echo "  --min-obstacle-size SIZE    Minimum obstacle size (default: 100.0)"
+            echo "  --max-obstacle-size SIZE    Maximum obstacle size (default: 300.0)"
+            echo "  --obstacle-mode MODE         Obstacle mode: Static or Dynamic (default: Static)"
             echo "  -h, --help                  Show this help message"
             exit 0
             ;;
@@ -110,6 +141,13 @@ echo -e "${YELLOW}Concurrent runs: $CONCURRENT_RUNS${NC}"
 echo -e "${YELLOW}Results directory: $RESULTS_DIR${NC}"
 echo -e "${YELLOW}Cleanup intermediate: $CLEANUP_INTERMEDIATE${NC}"
 echo -e "${YELLOW}Skip existing: $SKIP_EXISTING${NC}"
+echo -e ""
+echo -e "${CYAN}Obstacle Configuration:${NC}"
+echo -e "${WHITE}  Use Obstacles: $USE_OBSTACLES${NC}"
+echo -e "${WHITE}  Max Obstacles: $MAX_OBSTACLES${NC}"
+echo -e "${WHITE}  Min Obstacle Size: $MIN_OBSTACLE_SIZE${NC}"
+echo -e "${WHITE}  Max Obstacle Size: $MAX_OBSTACLE_SIZE${NC}"
+echo -e "${WHITE}  Obstacle Mode: $OBSTACLE_MODE${NC}"
 
 # Create results directory
 RESULTS_PATH="$PROJECT_PATH/$RESULTS_DIR"
@@ -158,7 +196,12 @@ run_training_session() {
         --log-file "$log_file" \
         --training-build-dir "$TRAINING_BUILD_DIR" \
         --map-name "$MAP_NAME" \
-        --exe-name "$EXE_NAME"; then
+        --exe-name "$EXE_NAME" \
+        --use-obstacles "$USE_OBSTACLES" \
+        --max-obstacles "$MAX_OBSTACLES" \
+        --min-obstacle-size "$MIN_OBSTACLE_SIZE" \
+        --max-obstacle-size "$MAX_OBSTACLE_SIZE" \
+        --obstacle-mode "$OBSTACLE_MODE"; then
         echo -e "${GREEN}Training session $session_id completed successfully!${NC}"
         return 0  # SUCCESS
     else
