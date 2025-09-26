@@ -74,10 +74,10 @@ if ([string]::IsNullOrEmpty($UnrealPath)) {
     $hostname = [System.Net.Dns]::GetHostName()
     if ($hostname -eq "filfreire01") {
         $UnrealPath = "C:\unreal\UE_5.6"
-    } elseif ($hostname -eq "filfreire02") {
-        $UnrealPath = "D:\unreal\UE_5.6"
+    } elseif ($hostname -eq "desktop-doap6m9") {
+        $UnrealPath = "E:\unreal\UE_5.6"
     } else {
-        # Default path if hostname is neither filfreire01 nor filfreire02
+        # Default path if hostname is neither filfreire01 nor desktop-doap6m9
         $UnrealPath = "C:\unreal\UE_5.6"
     }
 }
@@ -154,6 +154,19 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "PACKAGING COMPLETED SUCCESSFULLY!" -ForegroundColor Green
     Write-Host "======================================" -ForegroundColor Green
     Write-Host "Training build location: $PackageFolder" -ForegroundColor Cyan
+    
+    # Install Learning Agents dependencies for headless training
+    Write-Host "`nInstalling Learning Agents dependencies..." -ForegroundColor Yellow
+    try {
+        & "$ProjectPath\scripts\install-learning-agents-deps.ps1" -UnrealPath $UnrealPath -ProjectPath $ProjectPath
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Learning Agents dependencies installed successfully!" -ForegroundColor Green
+        } else {
+            Write-Warning "Learning Agents dependency installation failed, but packaging completed"
+        }
+    } catch {
+        Write-Warning "Failed to install Learning Agents dependencies: $_"
+    }
     
     # Try to find the executable
     $ExeFiles = Get-ChildItem -Path $PackageFolder -Filter "*.exe" -Recurse

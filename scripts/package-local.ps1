@@ -16,10 +16,10 @@ if ([string]::IsNullOrEmpty($UnrealPath)) {
     $hostname = [System.Net.Dns]::GetHostName()
     if ($hostname -eq "filfreire01") {
         $UnrealPath = "C:\unreal\UE_5.6"
-    } elseif ($hostname -eq "filfreire02") {
-        $UnrealPath = "D:\unreal\UE_5.6"
+    } elseif ($hostname -eq "desktop-doap6m9") {
+        $UnrealPath = "E:\unreal\UE_5.6"
     } else {
-        # Default path if hostname is neither filfreire01 nor filfreire02
+        # Default path if hostname is neither filfreire01 nor desktop-doap6m9
         $UnrealPath = "C:\unreal\UE_5.6"
     }
 }
@@ -57,8 +57,11 @@ if (-not (Test-Path $PackageFolder)) {
 
 Write-Host "Starting packaging process..." -ForegroundColor Cyan
 Write-Host "This may take several minutes..." -ForegroundColor Yellow
+Write-Host "Note: This script assumes the project is already built and cooked." -ForegroundColor Gray
+Write-Host "Run '.\scripts\build-local.ps1' first for optimal performance." -ForegroundColor Gray
 
 # Build the RunUAT command arguments
+# Note: Assumes project is already built and cooked (run build-local.ps1 first)
 $UATArgs = @(
     "BuildCookRun"
     "-project=`"$ProjectFile`""
@@ -66,15 +69,9 @@ $UATArgs = @(
     "-utf8output"
     "-nocompileeditor"
     "-skipbuildeditor"
-    "-cook"
-    "-project=`"$ProjectFile`""
-    "-target=$Target"
-    "-platform=$Platform"
-    "-installed"
     "-stage"
     "-archive"
     "-package"
-    "-build"
     "-pak"
     "-compressed"
     "-archivedirectory=`"$PackageFolder`""

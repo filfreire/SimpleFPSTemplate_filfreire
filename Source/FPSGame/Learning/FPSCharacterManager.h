@@ -10,6 +10,7 @@
 #include "LearningAgentsPPOTrainer.h"
 #include "LearningAgentsManager.h"
 #include "LearningAgentsCommunicator.h"
+#include "Learning/ObstacleTypes.h"
 #include "FPSCharacterManager.generated.h"
 
 class UFPSCharacterManagerComponent;
@@ -17,6 +18,8 @@ class UFPSCharacterInteractor;
 class UFPSCharacterTrainingEnvironment;
 class AFPSTargetActor;
 class ULearningAgentsNeuralNetwork;
+class UFPSObstacleManager;
+
 
 UENUM(BlueprintType)
 enum class EFPSCharacterManagerMode : uint8
@@ -24,6 +27,28 @@ enum class EFPSCharacterManagerMode : uint8
 	Training		UMETA(DisplayName = "Training"),
 	Inference		UMETA(DisplayName = "Inference"),
 	ReInitialize	UMETA(DisplayName = "ReInitialize")
+};
+
+
+USTRUCT(BlueprintType)
+struct FObstacleConfiguration
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	bool bUseObstacles = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	int32 MaxObstacles = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	float MinObstacleSize = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	float MaxObstacleSize = 300.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	EObstacleMode ObstacleMode = EObstacleMode::Static;
 };
 
 /**
@@ -119,4 +144,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Learning Objects")
 	FLearningAgentsPPOTrainerSettings TrainerSettings;
+
+	// Obstacle configuration
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	FObstacleConfiguration ObstacleConfig;
 }; 

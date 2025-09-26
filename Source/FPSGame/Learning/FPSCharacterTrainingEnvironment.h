@@ -7,6 +7,7 @@
 #include "FPSCharacterTrainingEnvironment.generated.h"
 
 class AFPSTargetActor;
+class UFPSObstacleManager;
 
 /**
  * Training environment for FPSCharacter learning to move to target
@@ -26,6 +27,10 @@ public:
 	// Target actor reference
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Learning")
 	AFPSTargetActor* TargetActor;
+
+	// Obstacle manager for handling obstacles
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Learning")
+	UFPSObstacleManager* ObstacleManager;
 
 	// Reward settings
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rewards")
@@ -59,6 +64,23 @@ public:
 	// Additional clearance above the reset center to prevent floor clipping
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
 	float GroundClearance = 200.0f;
+
+	// Obstacle configuration
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	bool bUseObstacles = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	int32 MaxObstacles = 8;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	float MinObstacleSize = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	float MaxObstacleSize = 300.0f;
+
+	// Function to configure obstacles from external source
+	UFUNCTION(BlueprintCallable, Category = "Obstacles")
+	void ConfigureObstacles(bool bUse, int32 MaxObs, float MinSize, float MaxSize, EObstacleMode Mode);
 
 private:
 	// Store previous distances for reward calculation
