@@ -179,3 +179,7 @@ Run pre-configured examples:
 # See all obstacle configuration examples
 .\scripts\run-training-with-obstacles.ps1
 ```
+
+## Multiple headless runs
+
+- Logs are saved into `\coop-game-fleep\TrainingBuild\Windo ws\CoopGameFleep\Saved\Logs\{logfilename}.log`
