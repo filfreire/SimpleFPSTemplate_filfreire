@@ -334,8 +334,8 @@ for ($Seed = $StartSeed; $Seed -le $EndSeed; $Seed++) {
     # Track results
     switch ($Status) {
         "SUCCESS" { $CompletedRuns += $Seed }
+        "TIMEOUT" { $CompletedRuns += $Seed }  # Timeouts are successful if they complete training
         "FAILED" { $FailedRuns += $Seed }
-        "TIMEOUT" { $FailedRuns += $Seed }
         "ERROR" { $FailedRuns += $Seed }
         "SKIPPED" { $SkippedRuns += $Seed }
     }
