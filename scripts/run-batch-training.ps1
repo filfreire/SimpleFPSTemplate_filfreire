@@ -15,7 +15,7 @@ param(
     [switch]$CleanupIntermediate = $false,
     [switch]$SkipExisting = $true,
     # Obstacle configuration parameters
-    [bool]$UseObstacles = $true,
+    [bool]$UseObstacles = $false,
     [int]$MaxObstacles = 8,
     [float]$MinObstacleSize = 100.0,
     [float]$MaxObstacleSize = 300.0,
