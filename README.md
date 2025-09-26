@@ -183,3 +183,39 @@ Run pre-configured examples:
 ## Multiple headless runs
 
 - Logs are saved into `\coop-game-fleep\TrainingBuild\Windo ws\CoopGameFleep\Saved\Logs\{logfilename}.log`
+
+
+### Running batch on Windows example
+
+```powershell
+## **1. Deactivated Obstacles (No Obstacles)**
+.\scripts\run-batch-training.ps1 -StartSeed 1 -EndSeed 5 -TimeoutMinutes 10 -UseObstacles $false -ResultsDir "results_NoObstacles_5Seeds_10min"
+```
+
+```powershell
+## **2. Active Static Obstacles**
+.\scripts\run-batch-training.ps1 -StartSeed 1 -EndSeed 5 -TimeoutMinutes 10 -UseObstacles $true -ObstacleMode "Static" -ResultsDir "results_StaticObstacles_5Seeds_10min"
+```
+
+```powershell
+## **3. Active Dynamic Obstacles**
+.\scripts\run-batch-training.ps1 -StartSeed 1 -EndSeed 5 -TimeoutMinutes 10 -UseObstacles $true -ObstacleMode "Dynamic" -ResultsDir "results_DynamicObstacles_5Seeds_10min"
+```
+
+
+### Running batch on Linux example
+
+```bash
+## **1. Deactivated Obstacles (No Obstacles)**
+./scripts/run-batch-training.sh --start-seed 1 --end-seed 5 --timeout-minutes 10 --use-obstacles false --results-dir "BatchTrainingResults_NoObstacles_5Seeds_10min"
+```
+
+```bash
+## **2. Active Static Obstacles**
+./scripts/run-batch-training.sh --start-seed 1 --end-seed 5 --timeout-minutes 10 --use-obstacles true --obstacle-mode "Static" --results-dir "BatchTrainingResults_StaticObstacles_5Seeds_10min"
+```
+
+```bash
+## **3. Active Dynamic Obstacles**
+./scripts/run-batch-training.sh --start-seed 1 --end-seed 5 --timeout-minutes 10 --use-obstacles true --obstacle-mode "Dynamic" --results-dir "BatchTrainingResults_DynamicObstacles_5Seeds_10min"
+```
