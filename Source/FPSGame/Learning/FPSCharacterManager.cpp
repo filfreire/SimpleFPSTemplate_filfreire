@@ -110,28 +110,28 @@ AFPSCharacterManager::AFPSCharacterManager()
 	if (FParse::Value(*CommandLine, TEXT("-UseObstacles="), UseObstaclesStr))
 	{
 		ObstacleConfig.bUseObstacles = UseObstaclesStr.ToBool();
-		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: UseObstacles set from command line: %s"), ObstacleConfig.bUseObstacles ? TEXT("true") : TEXT("false"));
+		// UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: UseObstacles set from command line: %s"), ObstacleConfig.bUseObstacles ? TEXT("true") : TEXT("false"));
 	}
 
 	FString MaxObstaclesStr;
 	if (FParse::Value(*CommandLine, TEXT("-MaxObstacles="), MaxObstaclesStr))
 	{
 		ObstacleConfig.MaxObstacles = FCString::Atoi(*MaxObstaclesStr);
-		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: MaxObstacles set from command line: %d"), ObstacleConfig.MaxObstacles);
+		// UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: MaxObstacles set from command line: %d"), ObstacleConfig.MaxObstacles);
 	}
 
 	FString MinObstacleSizeStr;
 	if (FParse::Value(*CommandLine, TEXT("-MinObstacleSize="), MinObstacleSizeStr))
 	{
 		ObstacleConfig.MinObstacleSize = FCString::Atof(*MinObstacleSizeStr);
-		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: MinObstacleSize set from command line: %f"), ObstacleConfig.MinObstacleSize);
+		// UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: MinObstacleSize set from command line: %f"), ObstacleConfig.MinObstacleSize);
 	}
 
 	FString MaxObstacleSizeStr;
 	if (FParse::Value(*CommandLine, TEXT("-MaxObstacleSize="), MaxObstacleSizeStr))
 	{
 		ObstacleConfig.MaxObstacleSize = FCString::Atof(*MaxObstacleSizeStr);
-		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: MaxObstacleSize set from command line: %f"), ObstacleConfig.MaxObstacleSize);
+		// UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: MaxObstacleSize set from command line: %f"), ObstacleConfig.MaxObstacleSize);
 	}
 
 	FString ObstacleModeStr;
@@ -145,7 +145,7 @@ AFPSCharacterManager::AFPSCharacterManager()
 		{
 			ObstacleConfig.ObstacleMode = EObstacleMode::Static;
 		}
-		UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: ObstacleMode set from command line: %s"), ObstacleModeStr.Equals(TEXT("Dynamic"), ESearchCase::IgnoreCase) ? TEXT("Dynamic") : TEXT("Static"));
+		// UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: ObstacleMode set from command line: %s"), ObstacleModeStr.Equals(TEXT("Dynamic"), ESearchCase::IgnoreCase) ? TEXT("Dynamic") : TEXT("Static"));
 	}
 	
 	// Only force ReInitialize mode for headless training to ensure fresh neural network initialization
