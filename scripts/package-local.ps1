@@ -102,5 +102,3 @@ if ($LASTEXITCODE -eq 0) {
     Write-Error "Packaging failed with exit code: $LASTEXITCODE"
     exit $LASTEXITCODE
 }
-
-Read-Host "Press Enter to continue"

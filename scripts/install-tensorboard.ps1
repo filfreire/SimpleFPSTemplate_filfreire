@@ -27,7 +27,3 @@ if (Test-Path $pythonPath) {
     Write-Host "Make sure you have the Learning Agents plugin enabled and Python dependencies installed." -ForegroundColor Yellow
     Write-Host "You may need to build your project first to generate the Python environment." -ForegroundColor Yellow
 }
-
-# Pause to see the output
-Write-Host "Press any key to continue..." -ForegroundColor Cyan
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

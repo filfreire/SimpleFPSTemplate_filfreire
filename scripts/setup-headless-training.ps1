@@ -105,12 +105,9 @@ Write-Host "  - FPSCharacter instances placed" -ForegroundColor White
 Write-Host "  - FPSTargetActor placed" -ForegroundColor White
 Write-Host "  - FPSCharacterManager placed and configured" -ForegroundColor White
 
-$confirmation = Read-Host "`nHave you completed all the above configuration? (y/N)"
-if ($confirmation -notmatch '^[Yy]$') {
-    Write-Host "`nPlease complete the configuration in Unreal Editor first." -ForegroundColor Yellow
-    Write-Host "Refer to docs/headless-training-setup.md for detailed instructions." -ForegroundColor Cyan
-    $ConfigComplete = $false
-}
+Write-Host "`nPlease ensure you have completed all the above configuration in Unreal Editor." -ForegroundColor Yellow
+Write-Host "Refer to docs/headless-training-setup.md for detailed instructions." -ForegroundColor Cyan
+$ConfigComplete = $true
 
 # Step 5: Ready to train
 Write-Host "`n[5/5] Training Setup Complete" -ForegroundColor Green
@@ -131,11 +128,8 @@ if ($ConfigComplete) {
     Write-Host "  cd TrainingBuild\Windows\FPSGame\Binaries\Win64" -ForegroundColor White
     Write-Host "  Get-Content -Path fpscharacter_training.log -Wait" -ForegroundColor White
     
-    $startTraining = Read-Host "`nWould you like to start training now? (y/N)"
-    if ($startTraining -match '^[Yy]$') {
-        Write-Host "`nStarting headless training..." -ForegroundColor Green
-        & "$ProjectPath\scripts\run-training-headless.ps1"
-    }
+    Write-Host "`nStarting headless training..." -ForegroundColor Green
+    & "$ProjectPath\scripts\run-training-headless.ps1"
 } else {
     Write-Host "Configuration incomplete. Please complete the setup first." -ForegroundColor Yellow
 }
