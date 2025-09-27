@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "LearningAgentsTrainingEnvironment.h"
+#include "Learning/ObstacleTypes.h"
 #include "FPSCharacterTrainingEnvironment.generated.h"
 
 class AFPSTargetActor;
@@ -77,6 +78,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
 	float MaxObstacleSize = 120.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
+	EObstacleMode ObstacleMode = EObstacleMode::Static;
 
 	// Function to configure obstacles from external source
 	UFUNCTION(BlueprintCallable, Category = "Obstacles")

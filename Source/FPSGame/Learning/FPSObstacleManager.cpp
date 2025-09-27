@@ -8,7 +8,8 @@
 
 UFPSObstacleManager::UFPSObstacleManager()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.TickInterval = 1.0f; // Tick every second
 }
 
 void UFPSObstacleManager::BeginPlay()
@@ -23,11 +24,30 @@ void UFPSObstacleManager::BeginPlay()
 	{
 		InitializeObstacles();
 	}
+	else if (ObstacleMode == EObstacleMode::Dynamic)
+	{
+		// Initialize obstacles for dynamic mode too, they'll be shuffled by timer
+		InitializeObstacles();
+		ShuffleTimer = 0.0f; // Reset timer
+	}
 }
 
 void UFPSObstacleManager::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	// Only shuffle in dynamic mode
+	if (ObstacleMode == EObstacleMode::Dynamic)
+	{
+		ShuffleTimer += DeltaTime;
+		
+		// Shuffle obstacles every 60 seconds
+		if (ShuffleTimer >= 60.0f)
+		{
+			ShuffleObstaclePositions();
+			ShuffleTimer = 0.0f;
+		}
+	}
 }
 
 void UFPSObstacleManager::InitializeObstacles()
@@ -282,14 +302,39 @@ AFPSObstacleActor* UFPSObstacleManager::CreateObstacleAtPosition(const FVector& 
 	
 	if (NewObstacle)
 	{
-		// Create wall-like obstacles with proper proportions
-		float Width = FMath::RandRange(MinObstacleSize, MaxObstacleSize);
-		float Height = FMath::RandRange(Width * 2.0f, Width * 3.0f); // Tall walls
-		float Depth = FMath::RandRange(Width * 0.3f, Width * 0.6f); // Thin walls
-		NewObstacle->InitializeObstacle(Width, Height, Depth);
+		// Calculate obstacle dimensions based on volume
+		float VolumeHeight = 1000.0f; // Default height if no volume
+		float VolumeWidthX = 200.0f;  // Default width if no volume
+		float VolumeWidthY = 200.0f;  // Default width if no volume
 		
-		UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Created wall obstacle at %s with W:%f H:%f D:%f"), 
-			*Position.ToString(), Width, Height, Depth);
+		// Get dimensions from location volume if available
+		if (LocationVolume)
+		{
+			FVector VolumeOrigin = LocationVolume->GetActorLocation();
+			FVector VolumeExtent;
+			LocationVolume->GetActorBounds(false, VolumeOrigin, VolumeExtent);
+			VolumeHeight = VolumeExtent.Z * 2.0f; // Full height of volume
+			VolumeWidthX = VolumeExtent.X * 2.0f;  // Full width of volume
+			VolumeWidthY = VolumeExtent.Y * 2.0f;  // Full width of volume
+		}
+		else
+		{
+			// Use environment bounds as fallback
+			VolumeHeight = EnvironmentBounds.Z * 2.0f;
+			VolumeWidthX = EnvironmentBounds.X * 2.0f;
+			VolumeWidthY = EnvironmentBounds.Y * 2.0f;
+		}
+		
+		// Create obstacles that span the full height and are randomly wide
+		float WidthX = FMath::RandRange(MinObstacleSize, FMath::Min(MaxObstacleSize, VolumeWidthX * 0.8f));
+		float WidthY = FMath::RandRange(MinObstacleSize, FMath::Min(MaxObstacleSize, VolumeWidthY * 0.8f));
+		float Height = VolumeHeight; // Use full volume height
+		float Depth = FMath::RandRange(WidthX * 0.1f, WidthX * 0.3f); // Thin walls
+		
+		NewObstacle->InitializeObstacle(WidthX, Height, WidthY);
+		
+		UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Created obstacle at %s with WX:%f WY:%f H:%f D:%f (Volume: %fx%fx%f)"), 
+			*Position.ToString(), WidthX, WidthY, Height, Depth, VolumeWidthX, VolumeWidthY, VolumeHeight);
 	}
 
 	return NewObstacle;
@@ -354,5 +399,35 @@ void UFPSObstacleManager::FindAndSetLocationVolume()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("FPSObstacleManager: No valid Volume found (checked %d volumes), using environment bounds"), VolumeCount);
+}
+
+void UFPSObstacleManager::ShuffleObstaclePositions()
+{
+	if (ObstacleMode != EObstacleMode::Dynamic)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FPSObstacleManager: ShuffleObstaclePositions called but not in dynamic mode"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Shuffling %d obstacle positions"), CurrentObstacles.Num());
+
+	// Store current obstacle count
+	int32 ObstacleCount = CurrentObstacles.Num();
+	
+	// Clear existing obstacles
+	ClearObstacles();
+	
+	// Recreate obstacles with new random positions
+	for (int32 i = 0; i < ObstacleCount; i++)
+	{
+		FVector ObstaclePosition = GenerateRandomObstaclePosition(FVector::ZeroVector, 0.0f);
+		AFPSObstacleActor* NewObstacle = CreateObstacleAtPosition(ObstaclePosition);
+		if (NewObstacle)
+		{
+			CurrentObstacles.Add(NewObstacle);
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Shuffled %d obstacles to new positions"), CurrentObstacles.Num());
 }
 

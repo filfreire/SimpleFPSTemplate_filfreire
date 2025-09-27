@@ -104,7 +104,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
 	void SetObstacleMode(EObstacleMode NewMode);
 
+	// Shuffle obstacle positions (for dynamic mode)
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void ShuffleObstaclePositions();
+
 private:
+	// Timer for shuffling obstacles in dynamic mode
+	float ShuffleTimer = 0.0f;
 	// Generate a random position for an obstacle
 	FVector GenerateRandomObstaclePosition(const FVector& AvoidLocation, float AvoidRadius) const;
 

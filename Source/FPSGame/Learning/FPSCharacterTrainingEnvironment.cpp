@@ -154,8 +154,9 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 		ObstacleManager->MaxObstacles = MaxObstacles;
 		ObstacleManager->MinObstacleSize = MinObstacleSize;
 		ObstacleManager->MaxObstacleSize = MaxObstacleSize;
+		ObstacleManager->SetObstacleMode(ObstacleMode); // Set the stored mode
 		ObstacleManager->FindAndSetLocationVolume(); // Try to find LocationVolume
-		ObstacleManager->InitializeObstacles();
+		// Don't initialize obstacles here - let the mode-specific logic handle it
 	}
 
 	// Reset episode step counter
@@ -189,11 +190,19 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 	// Place character above ground with clearance
 	CharacterResetLocation.Z = GroundZ + GroundClearance;
 
-	// Regenerate obstacles for dynamic mode
-	if (bUseObstacles && ObstacleManager && ObstacleManager->ObstacleMode == EObstacleMode::Dynamic)
+	// Initialize or regenerate obstacles based on mode
+	if (bUseObstacles && ObstacleManager)
 	{
-		// Use smart placement for dynamic obstacles
-		ObstacleManager->InitializeObstaclesWithSmartPlacement(CharacterResetLocation, TargetActor->GetActorLocation());
+		if (ObstacleManager->ObstacleMode == EObstacleMode::Dynamic)
+		{
+			// Use smart placement for dynamic obstacles
+			ObstacleManager->InitializeObstaclesWithSmartPlacement(CharacterResetLocation, TargetActor->GetActorLocation());
+		}
+		else if (ObstacleManager->ObstacleMode == EObstacleMode::Static && ObstacleManager->CurrentObstacles.Num() == 0)
+		{
+			// Initialize static obstacles only if they haven't been created yet
+			ObstacleManager->InitializeObstacles();
+		}
 	}
 
 	// Reset character position and rotation
@@ -256,6 +265,7 @@ void UFPSCharacterTrainingEnvironment::ConfigureObstacles(bool bUse, int32 MaxOb
 	MaxObstacles = MaxObs;
 	MinObstacleSize = MinSize;
 	MaxObstacleSize = MaxSize;
+	ObstacleMode = Mode; // Store the mode for later use
 	
 	// Update obstacle manager if it exists
 	if (ObstacleManager)
