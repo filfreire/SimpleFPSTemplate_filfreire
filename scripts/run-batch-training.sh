@@ -18,8 +18,8 @@ SKIP_EXISTING=true
 # Obstacle configuration parameters
 USE_OBSTACLES=false
 MAX_OBSTACLES=8
-MIN_OBSTACLE_SIZE=100.0
-MAX_OBSTACLE_SIZE=300.0
+MIN_OBSTACLE_SIZE=30.0
+MAX_OBSTACLE_SIZE=80.0
 OBSTACLE_MODE="Static"
 
 # Parse command line arguments

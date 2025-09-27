@@ -46,6 +46,57 @@ void UFPSObstacleManager::InitializeObstacles()
 		ObstacleMode == EObstacleMode::Static ? TEXT("Static") : TEXT("Dynamic"));
 }
 
+void UFPSObstacleManager::InitializeObstaclesWithSmartPlacement(const FVector& AgentLocation, const FVector& TargetLocation)
+{
+	// Clear existing obstacles
+	ClearObstacles();
+
+	// Calculate path between agent and target
+	FVector PathDirection = (TargetLocation - AgentLocation).GetSafeNormal();
+	FVector PathCenter = (AgentLocation + TargetLocation) * 0.5f;
+	float PathLength = FVector::Dist(AgentLocation, TargetLocation);
+
+	// Generate obstacles with smart placement
+	for (int32 i = 0; i < MaxObstacles; i++)
+	{
+		FVector ObstaclePosition;
+		
+		// 60% chance to place along the path, 40% chance random
+		if (FMath::RandRange(0.0f, 1.0f) < 0.6f && PathLength > 100.0f)
+		{
+			// Place along the path between agent and target
+			float PathProgress = FMath::RandRange(0.2f, 0.8f); // Don't place too close to start/end
+			FVector PathPosition = AgentLocation + PathDirection * (PathLength * PathProgress);
+			
+			// Add some perpendicular offset
+			FVector Perpendicular = FVector(-PathDirection.Y, PathDirection.X, 0.0f);
+			float Offset = FMath::RandRange(-PathLength * 0.3f, PathLength * 0.3f);
+			ObstaclePosition = PathPosition + Perpendicular * Offset;
+		}
+		else
+		{
+			// Use regular random positioning
+			ObstaclePosition = GenerateRandomObstaclePosition(FVector::ZeroVector, 0.0f);
+		}
+		
+		// Find ground level
+		ObstaclePosition.Z = FindGroundLevel(ObstaclePosition);
+		
+		// Create obstacle if position is valid
+		if (IsValidObstaclePosition(ObstaclePosition, AgentLocation, 100.0f) && 
+			IsValidObstaclePosition(ObstaclePosition, TargetLocation, 100.0f))
+		{
+			AFPSObstacleActor* NewObstacle = CreateObstacleAtPosition(ObstaclePosition);
+			if (NewObstacle)
+			{
+				CurrentObstacles.Add(NewObstacle);
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Initialized %d obstacles with smart placement"), CurrentObstacles.Num());
+}
+
 void UFPSObstacleManager::ClearObstacles()
 {
 	for (AFPSObstacleActor* Obstacle : CurrentObstacles)
@@ -104,9 +155,26 @@ FVector UFPSObstacleManager::GenerateRandomObstaclePosition(const FVector& Avoid
 
 	do
 	{
-		Position.X = EnvironmentCenter.X + FMath::RandRange(-EnvironmentBounds.X, EnvironmentBounds.X);
-		Position.Y = EnvironmentCenter.Y + FMath::RandRange(-EnvironmentBounds.Y, EnvironmentBounds.Y);
-		Position.Z = EnvironmentCenter.Z; // Place on ground level
+		// Smart positioning: 70% chance to place near center (agent/target area), 30% chance random
+		if (FMath::RandRange(0.0f, 1.0f) < 0.7f)
+		{
+			// Place obstacles closer to center where agents and targets are
+			float CenterRadius = FMath::Min(EnvironmentBounds.X, EnvironmentBounds.Y) * 0.4f; // 40% of environment size
+			float Angle = FMath::RandRange(0.0f, 2.0f * PI);
+			float Distance = FMath::RandRange(0.0f, CenterRadius);
+			
+			Position.X = EnvironmentCenter.X + FMath::Cos(Angle) * Distance;
+			Position.Y = EnvironmentCenter.Y + FMath::Sin(Angle) * Distance;
+		}
+		else
+		{
+			// Random placement in full environment
+			Position.X = EnvironmentCenter.X + FMath::RandRange(-EnvironmentBounds.X, EnvironmentBounds.X);
+			Position.Y = EnvironmentCenter.Y + FMath::RandRange(-EnvironmentBounds.Y, EnvironmentBounds.Y);
+		}
+		
+		// Find ground level using line trace
+		Position.Z = FindGroundLevel(Position);
 		
 		Attempts++;
 	} while (!IsValidObstaclePosition(Position, AvoidLocation, AvoidRadius) && Attempts < MaxAttempts);
@@ -160,14 +228,39 @@ AFPSObstacleActor* UFPSObstacleManager::CreateObstacleAtPosition(const FVector& 
 	
 	if (NewObstacle)
 	{
-		// Set random size
+		// Set more appropriate size - smaller and more agent-relative
 		float Size = FMath::RandRange(MinObstacleSize, MaxObstacleSize);
-		NewObstacle->InitializeObstacle(Size, Size * 1.5f, Size); // Height is 1.5x width/depth
+		float Height = FMath::RandRange(Size * 0.8f, Size * 1.2f); // Height closer to width/depth
+		NewObstacle->InitializeObstacle(Size, Height, Size);
 		
-		UE_LOG(LogTemp, VeryVerbose, TEXT("FPSObstacleManager: Created obstacle at %s with size %f"), 
-			*Position.ToString(), Size);
+		UE_LOG(LogTemp, VeryVerbose, TEXT("FPSObstacleManager: Created obstacle at %s with size %f (H:%f)"), 
+			*Position.ToString(), Size, Height);
 	}
 
 	return NewObstacle;
+}
+
+float UFPSObstacleManager::FindGroundLevel(const FVector& Position) const
+{
+	if (!GetWorld())
+	{
+		return EnvironmentCenter.Z;
+	}
+
+	// Line trace from above to find ground
+	FVector TraceStart = FVector(Position.X, Position.Y, EnvironmentCenter.Z + 1000.0f);
+	FVector TraceEnd = FVector(Position.X, Position.Y, EnvironmentCenter.Z - 1000.0f);
+	
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams;
+	QueryParams.bTraceComplex = false;
+	
+	float GroundZ = EnvironmentCenter.Z; // Default to environment center if no ground found
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldStatic, QueryParams))
+	{
+		GroundZ = HitResult.Location.Z;
+	}
+	
+	return GroundZ;
 }
 

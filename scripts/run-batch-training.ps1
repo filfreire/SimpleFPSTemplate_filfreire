@@ -17,8 +17,8 @@ param(
     # Obstacle configuration parameters
     [bool]$UseObstacles = $false,
     [int]$MaxObstacles = 8,
-    [float]$MinObstacleSize = 100.0,
-    [float]$MaxObstacleSize = 300.0,
+    [float]$MinObstacleSize = 30.0,
+    [float]$MaxObstacleSize = 80.0,
     [string]$ObstacleMode = "Static"  # "Static" or "Dynamic"
 )
 

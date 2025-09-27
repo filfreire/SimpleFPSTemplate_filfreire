@@ -37,10 +37,10 @@ public:
 	int32 MaxObstacles = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	float MinObstacleSize = 50.0f;
+	float MinObstacleSize = 30.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	float MaxObstacleSize = 200.0f;
+	float MaxObstacleSize = 80.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
 	float MinDistanceFromAgents = 200.0f;
@@ -66,6 +66,10 @@ public:
 	// Initialize obstacles for the environment
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
 	void InitializeObstacles();
+
+	// Initialize obstacles with smart placement around agents and targets
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void InitializeObstaclesWithSmartPlacement(const FVector& AgentLocation, const FVector& TargetLocation);
 
 	// Clear all obstacles
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
@@ -96,5 +100,8 @@ private:
 
 	// Create a single obstacle at the given position
 	AFPSObstacleActor* CreateObstacleAtPosition(const FVector& Position);
+
+	// Find ground level at a given position using line trace
+	float FindGroundLevel(const FVector& Position) const;
 };
 

@@ -157,12 +157,6 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 		ObstacleManager->InitializeObstacles();
 	}
 
-	// Regenerate obstacles for dynamic mode
-	if (bUseObstacles && ObstacleManager && ObstacleManager->ObstacleMode == EObstacleMode::Dynamic)
-	{
-		ObstacleManager->RegenerateObstacles();
-	}
-
 	// Reset episode step counter
 	EpisodeSteps.Add(AgentId, 0);
 	PreviousDistances.Remove(AgentId);
@@ -193,6 +187,13 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 	
 	// Place character above ground with clearance
 	CharacterResetLocation.Z = GroundZ + GroundClearance;
+
+	// Regenerate obstacles for dynamic mode
+	if (bUseObstacles && ObstacleManager && ObstacleManager->ObstacleMode == EObstacleMode::Dynamic)
+	{
+		// Use smart placement for dynamic obstacles
+		ObstacleManager->InitializeObstaclesWithSmartPlacement(CharacterResetLocation, TargetActor->GetActorLocation());
+	}
 
 	// Reset character position and rotation
 	Character->SetActorLocation(CharacterResetLocation);
