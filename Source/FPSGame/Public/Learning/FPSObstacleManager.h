@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "FPSObstacleActor.h"
 #include "Learning/ObstacleTypes.h"
+#include "GameFramework/Volume.h"
 #include "FPSObstacleManager.generated.h"
 
 
@@ -34,13 +35,13 @@ public:
 
 	// Obstacle configuration
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	int32 MaxObstacles = 10;
+	int32 MaxObstacles = 24;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	float MinObstacleSize = 30.0f;
+	float MinObstacleSize = 60.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	float MaxObstacleSize = 80.0f;
+	float MaxObstacleSize = 120.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
 	float MinDistanceFromAgents = 200.0f;
@@ -48,7 +49,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
 	float MinDistanceFromTarget = 200.0f;
 
-	// Environment bounds for obstacle placement
+	// Location volume for obstacle placement (if available)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
+	AVolume* LocationVolume = nullptr;
+
+	// Fallback environment bounds for obstacle placement (used if no LocationVolume)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
 	FVector EnvironmentCenter = FVector::ZeroVector;
 
@@ -70,6 +75,14 @@ public:
 	// Initialize obstacles with smart placement around agents and targets
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
 	void InitializeObstaclesWithSmartPlacement(const FVector& AgentLocation, const FVector& TargetLocation);
+
+	// Set the location volume for obstacle placement
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void SetLocationVolume(AVolume* NewLocationVolume);
+
+	// Find and set location volume automatically
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void FindAndSetLocationVolume();
 
 	// Clear all obstacles
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")

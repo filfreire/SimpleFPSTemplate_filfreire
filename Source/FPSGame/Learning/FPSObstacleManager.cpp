@@ -3,6 +3,8 @@
 #include "Learning/FPSObstacleManager.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
+#include "GameFramework/Volume.h"
+#include "EngineUtils.h"
 
 UFPSObstacleManager::UFPSObstacleManager()
 {
@@ -12,6 +14,9 @@ UFPSObstacleManager::UFPSObstacleManager()
 void UFPSObstacleManager::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	// Try to find location volume automatically
+	FindAndSetLocationVolume();
 	
 	// Initialize obstacles based on mode
 	if (ObstacleMode == EObstacleMode::Static)
@@ -51,40 +56,58 @@ void UFPSObstacleManager::InitializeObstaclesWithSmartPlacement(const FVector& A
 	// Clear existing obstacles
 	ClearObstacles();
 
-	// Calculate path between agent and target
-	FVector PathDirection = (TargetLocation - AgentLocation).GetSafeNormal();
-	FVector PathCenter = (AgentLocation + TargetLocation) * 0.5f;
-	float PathLength = FVector::Dist(AgentLocation, TargetLocation);
-
 	// Generate obstacles with smart placement
 	for (int32 i = 0; i < MaxObstacles; i++)
 	{
 		FVector ObstaclePosition;
-		
-		// 60% chance to place along the path, 40% chance random
-		if (FMath::RandRange(0.0f, 1.0f) < 0.6f && PathLength > 100.0f)
+		int32 Attempts = 0;
+		const int32 MaxAttempts = 50;
+		bool ValidPosition = false;
+
+		// Try to find a valid position that avoids agents and targets
+		do
 		{
-			// Place along the path between agent and target
-			float PathProgress = FMath::RandRange(0.2f, 0.8f); // Don't place too close to start/end
-			FVector PathPosition = AgentLocation + PathDirection * (PathLength * PathProgress);
+		if (LocationVolume)
+		{
+			// Use LocationVolume for positioning
+			FVector VolumeOrigin = LocationVolume->GetActorLocation();
+			FVector VolumeExtent;
+			LocationVolume->GetActorBounds(false, VolumeOrigin, VolumeExtent);
 			
-			// Add some perpendicular offset
-			FVector Perpendicular = FVector(-PathDirection.Y, PathDirection.X, 0.0f);
-			float Offset = FMath::RandRange(-PathLength * 0.3f, PathLength * 0.3f);
-			ObstaclePosition = PathPosition + Perpendicular * Offset;
+			UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Volume Origin: %s, Extent: %s"), 
+				*VolumeOrigin.ToString(), *VolumeExtent.ToString());
+			
+			// Generate random point within volume bounds
+			ObstaclePosition.X = FMath::RandRange(VolumeOrigin.X - VolumeExtent.X, VolumeOrigin.X + VolumeExtent.X);
+			ObstaclePosition.Y = FMath::RandRange(VolumeOrigin.Y - VolumeExtent.Y, VolumeOrigin.Y + VolumeExtent.Y);
+			ObstaclePosition.Z = VolumeOrigin.Z + VolumeExtent.Z; // Start from top of volume
+			
+			// Find ground level
+			ObstaclePosition.Z = FindGroundLevel(ObstaclePosition);
+			
+			UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Generated obstacle position: %s"), *ObstaclePosition.ToString());
 		}
 		else
-		{
-			// Use regular random positioning
-			ObstaclePosition = GenerateRandomObstaclePosition(FVector::ZeroVector, 0.0f);
-		}
-		
-		// Find ground level
-		ObstaclePosition.Z = FindGroundLevel(ObstaclePosition);
-		
-		// Create obstacle if position is valid
-		if (IsValidObstaclePosition(ObstaclePosition, AgentLocation, 100.0f) && 
-			IsValidObstaclePosition(ObstaclePosition, TargetLocation, 100.0f))
+			{
+				// Fallback to environment bounds
+				ObstaclePosition.X = EnvironmentCenter.X + FMath::RandRange(-EnvironmentBounds.X, EnvironmentBounds.X);
+				ObstaclePosition.Y = EnvironmentCenter.Y + FMath::RandRange(-EnvironmentBounds.Y, EnvironmentBounds.Y);
+				ObstaclePosition.Z = EnvironmentCenter.Z;
+				ObstaclePosition.Z = FindGroundLevel(ObstaclePosition);
+			}
+			
+			// Ensure obstacle is properly above ground
+			ObstaclePosition.Z += 10.0f;
+			
+			// Check if position is valid (avoids agents and targets)
+			ValidPosition = IsValidObstaclePosition(ObstaclePosition, AgentLocation, 150.0f) && 
+							IsValidObstaclePosition(ObstaclePosition, TargetLocation, 150.0f);
+			
+			Attempts++;
+		} while (!ValidPosition && Attempts < MaxAttempts);
+
+		// Create obstacle if we found a valid position
+		if (ValidPosition)
 		{
 			AFPSObstacleActor* NewObstacle = CreateObstacleAtPosition(ObstaclePosition);
 			if (NewObstacle)
@@ -94,7 +117,7 @@ void UFPSObstacleManager::InitializeObstaclesWithSmartPlacement(const FVector& A
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Initialized %d obstacles with smart placement"), CurrentObstacles.Num());
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Initialized %d obstacles with smart placement (avoiding agents/targets)"), CurrentObstacles.Num());
 }
 
 void UFPSObstacleManager::ClearObstacles()
@@ -116,6 +139,10 @@ void UFPSObstacleManager::RegenerateObstacles()
 		ClearObstacles();
 		InitializeObstacles();
 		UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Regenerated obstacles in dynamic mode"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FPSObstacleManager: RegenerateObstacles called but not in dynamic mode"));
 	}
 }
 
@@ -155,26 +182,32 @@ FVector UFPSObstacleManager::GenerateRandomObstaclePosition(const FVector& Avoid
 
 	do
 	{
-		// Smart positioning: 70% chance to place near center (agent/target area), 30% chance random
-		if (FMath::RandRange(0.0f, 1.0f) < 0.7f)
+		if (LocationVolume)
 		{
-			// Place obstacles closer to center where agents and targets are
-			float CenterRadius = FMath::Min(EnvironmentBounds.X, EnvironmentBounds.Y) * 0.4f; // 40% of environment size
-			float Angle = FMath::RandRange(0.0f, 2.0f * PI);
-			float Distance = FMath::RandRange(0.0f, CenterRadius);
+			// Use LocationVolume for positioning
+			FVector VolumeOrigin = LocationVolume->GetActorLocation();
+			FVector VolumeExtent;
+			LocationVolume->GetActorBounds(false, VolumeOrigin, VolumeExtent);
 			
-			Position.X = EnvironmentCenter.X + FMath::Cos(Angle) * Distance;
-			Position.Y = EnvironmentCenter.Y + FMath::Sin(Angle) * Distance;
+			// Generate random point within volume bounds
+			Position.X = FMath::RandRange(VolumeOrigin.X - VolumeExtent.X, VolumeOrigin.X + VolumeExtent.X);
+			Position.Y = FMath::RandRange(VolumeOrigin.Y - VolumeExtent.Y, VolumeOrigin.Y + VolumeExtent.Y);
+			Position.Z = VolumeOrigin.Z + VolumeExtent.Z; // Start from top of volume
+			
+			// Find ground level
+			Position.Z = FindGroundLevel(Position);
 		}
 		else
 		{
-			// Random placement in full environment
+			// Fallback to environment bounds
 			Position.X = EnvironmentCenter.X + FMath::RandRange(-EnvironmentBounds.X, EnvironmentBounds.X);
 			Position.Y = EnvironmentCenter.Y + FMath::RandRange(-EnvironmentBounds.Y, EnvironmentBounds.Y);
+			Position.Z = EnvironmentCenter.Z;
+			Position.Z = FindGroundLevel(Position);
 		}
 		
-		// Find ground level using line trace
-		Position.Z = FindGroundLevel(Position);
+		// Ensure obstacle is properly above ground
+		Position.Z += 10.0f; // Small offset to prevent clipping
 		
 		Attempts++;
 	} while (!IsValidObstaclePosition(Position, AvoidLocation, AvoidRadius) && Attempts < MaxAttempts);
@@ -184,14 +217,31 @@ FVector UFPSObstacleManager::GenerateRandomObstaclePosition(const FVector& Avoid
 
 bool UFPSObstacleManager::IsValidObstaclePosition(const FVector& Position, const FVector& AvoidLocation, float AvoidRadius) const
 {
-	// Check if position is within environment bounds
-	if (Position.X < EnvironmentCenter.X - EnvironmentBounds.X || Position.X > EnvironmentCenter.X + EnvironmentBounds.X ||
-		Position.Y < EnvironmentCenter.Y - EnvironmentBounds.Y || Position.Y > EnvironmentCenter.Y + EnvironmentBounds.Y)
+	// Check if position is within bounds
+	if (LocationVolume)
 	{
-		return false;
+		// Check if position is within volume bounds
+		FVector VolumeOrigin = LocationVolume->GetActorLocation();
+		FVector VolumeExtent;
+		LocationVolume->GetActorBounds(false, VolumeOrigin, VolumeExtent);
+		
+		if (Position.X < VolumeOrigin.X - VolumeExtent.X || Position.X > VolumeOrigin.X + VolumeExtent.X ||
+			Position.Y < VolumeOrigin.Y - VolumeExtent.Y || Position.Y > VolumeOrigin.Y + VolumeExtent.Y)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		// Fallback to environment bounds
+		if (Position.X < EnvironmentCenter.X - EnvironmentBounds.X || Position.X > EnvironmentCenter.X + EnvironmentBounds.X ||
+			Position.Y < EnvironmentCenter.Y - EnvironmentBounds.Y || Position.Y > EnvironmentCenter.Y + EnvironmentBounds.Y)
+		{
+			return false;
+		}
 	}
 
-	// Check distance from avoid location
+	// Check distance from avoid location (agents/targets)
 	if (AvoidRadius > 0.0f && FVector::Dist(Position, AvoidLocation) < AvoidRadius)
 	{
 		return false;
@@ -217,8 +267,12 @@ AFPSObstacleActor* UFPSObstacleManager::CreateObstacleAtPosition(const FVector& 
 {
 	if (!GetWorld() || !ObstacleClass)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("FPSObstacleManager: Cannot create obstacle - World: %s, ObstacleClass: %s"), 
+			GetWorld() ? TEXT("Valid") : TEXT("NULL"), ObstacleClass ? TEXT("Valid") : TEXT("NULL"));
 		return nullptr;
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Creating obstacle at position: %s"), *Position.ToString());
 
 	// Spawn obstacle
 	FActorSpawnParameters SpawnParams;
@@ -228,13 +282,14 @@ AFPSObstacleActor* UFPSObstacleManager::CreateObstacleAtPosition(const FVector& 
 	
 	if (NewObstacle)
 	{
-		// Set more appropriate size - smaller and more agent-relative
-		float Size = FMath::RandRange(MinObstacleSize, MaxObstacleSize);
-		float Height = FMath::RandRange(Size * 0.8f, Size * 1.2f); // Height closer to width/depth
-		NewObstacle->InitializeObstacle(Size, Height, Size);
+		// Create wall-like obstacles with proper proportions
+		float Width = FMath::RandRange(MinObstacleSize, MaxObstacleSize);
+		float Height = FMath::RandRange(Width * 2.0f, Width * 3.0f); // Tall walls
+		float Depth = FMath::RandRange(Width * 0.3f, Width * 0.6f); // Thin walls
+		NewObstacle->InitializeObstacle(Width, Height, Depth);
 		
-		UE_LOG(LogTemp, VeryVerbose, TEXT("FPSObstacleManager: Created obstacle at %s with size %f (H:%f)"), 
-			*Position.ToString(), Size, Height);
+		UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Created wall obstacle at %s with W:%f H:%f D:%f"), 
+			*Position.ToString(), Width, Height, Depth);
 	}
 
 	return NewObstacle;
@@ -262,5 +317,42 @@ float UFPSObstacleManager::FindGroundLevel(const FVector& Position) const
 	}
 	
 	return GroundZ;
+}
+
+void UFPSObstacleManager::SetLocationVolume(AVolume* NewLocationVolume)
+{
+	LocationVolume = NewLocationVolume;
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: LocationVolume set to %s"), 
+		LocationVolume ? *LocationVolume->GetName() : TEXT("NULL"));
+}
+
+void UFPSObstacleManager::FindAndSetLocationVolume()
+{
+	if (!GetWorld())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("FPSObstacleManager: No World available"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Searching for volumes in world..."));
+
+	// Find the first Volume in the world
+	int32 VolumeCount = 0;
+	for (TActorIterator<AVolume> ActorItr(GetWorld()); ActorItr; ++ActorItr)
+	{
+		AVolume* FoundVolume = *ActorItr;
+		VolumeCount++;
+		UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Found Volume %d: %s (Class: %s)"), 
+			VolumeCount, *FoundVolume->GetName(), *FoundVolume->GetClass()->GetName());
+		
+		if (IsValid(FoundVolume))
+		{
+			SetLocationVolume(FoundVolume);
+			UE_LOG(LogTemp, Log, TEXT("FPSObstacleManager: Using Volume: %s"), *FoundVolume->GetName());
+			return;
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("FPSObstacleManager: No valid Volume found (checked %d volumes), using environment bounds"), VolumeCount);
 }
 

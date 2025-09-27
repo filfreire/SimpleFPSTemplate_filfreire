@@ -154,6 +154,7 @@ void UFPSCharacterTrainingEnvironment::ResetAgentEpisode_Implementation(const in
 		ObstacleManager->MaxObstacles = MaxObstacles;
 		ObstacleManager->MinObstacleSize = MinObstacleSize;
 		ObstacleManager->MaxObstacleSize = MaxObstacleSize;
+		ObstacleManager->FindAndSetLocationVolume(); // Try to find LocationVolume
 		ObstacleManager->InitializeObstacles();
 	}
 

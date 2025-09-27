@@ -70,13 +70,13 @@ public:
 	bool bUseObstacles = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
-	int32 MaxObstacles = 8;
+	int32 MaxObstacles = 24;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
-	float MinObstacleSize = 30.0f;
+	float MinObstacleSize = 60.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
-	float MaxObstacleSize = 80.0f;
+	float MaxObstacleSize = 120.0f;
 
 	// Function to configure obstacles from external source
 	UFUNCTION(BlueprintCallable, Category = "Obstacles")
