@@ -116,10 +116,10 @@ Train agents to navigate around obstacles in both static and dynamic modes:
 
 ```powershell
 # Static obstacles - same positions throughout training
-.\scripts\run-training-headless.ps1 -TimeoutMinutes 45 -UseObstacles $true -MaxObstacles 10 -MinObstacleSize 80 -MaxObstacleSize 250 -ObstacleMode "Static" -LearningRatePolicy 0.0002
+.\scripts\run-training-headless.ps1 -TimeoutMinutes 45 -UseObstacles $true -MaxObstacles 10 -MinObstacleSize 30 -MaxObstacleSize 80 -ObstacleMode "Static" -LearningRatePolicy 0.0002
 
 # Dynamic obstacles - regenerated each episode
-.\scripts\run-training-headless.ps1 -TimeoutMinutes 45 -UseObstacles $true -MaxObstacles 15 -MinObstacleSize 50 -MaxObstacleSize 300 -ObstacleMode "Dynamic" -LearningRatePolicy 0.0002
+.\scripts\run-training-headless.ps1 -TimeoutMinutes 45 -UseObstacles $true -MaxObstacles 15 -MinObstacleSize 20 -MaxObstacleSize 100 -ObstacleMode "Dynamic" -LearningRatePolicy 0.0002
 
 # No obstacles - baseline comparison
 .\scripts\run-training-headless.ps1 -TimeoutMinutes 45 -UseObstacles $false -LearningRatePolicy 0.0002
@@ -128,8 +128,8 @@ Train agents to navigate around obstacles in both static and dynamic modes:
 **Obstacle parameters:**
 - `-UseObstacles $true`: Enable obstacle system
 - `-MaxObstacles 10`: Number of obstacles to spawn
-- `-MinObstacleSize 80`: Minimum obstacle size
-- `-MaxObstacleSize 250`: Maximum obstacle size
+- `-MinObstacleSize 30`: Minimum obstacle size
+- `-MaxObstacleSize 80`: Maximum obstacle size
 - `-ObstacleMode "Static"`: Obstacles stay in same positions
 - `-ObstacleMode "Dynamic"`: Obstacles regenerate each episode
 

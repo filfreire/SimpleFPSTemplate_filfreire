@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "FPSObstacleActor.h"
 #include "Learning/ObstacleTypes.h"
+#include "GameFramework/Volume.h"
 #include "FPSObstacleManager.generated.h"
 
 
@@ -34,13 +35,13 @@ public:
 
 	// Obstacle configuration
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	int32 MaxObstacles = 10;
+	int32 MaxObstacles = 24;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	float MinObstacleSize = 50.0f;
+	float MinObstacleSize = 60.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
-	float MaxObstacleSize = 200.0f;
+	float MaxObstacleSize = 120.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
 	float MinDistanceFromAgents = 200.0f;
@@ -48,7 +49,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Configuration")
 	float MinDistanceFromTarget = 200.0f;
 
-	// Environment bounds for obstacle placement
+	// Location volume for obstacle placement (if available)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
+	AVolume* LocationVolume = nullptr;
+
+	// Fallback environment bounds for obstacle placement (used if no LocationVolume)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Environment")
 	FVector EnvironmentCenter = FVector::ZeroVector;
 
@@ -66,6 +71,18 @@ public:
 	// Initialize obstacles for the environment
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
 	void InitializeObstacles();
+
+	// Initialize obstacles with smart placement around agents and targets
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void InitializeObstaclesWithSmartPlacement(const FVector& AgentLocation, const FVector& TargetLocation);
+
+	// Set the location volume for obstacle placement
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void SetLocationVolume(AVolume* NewLocationVolume);
+
+	// Find and set location volume automatically
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void FindAndSetLocationVolume();
 
 	// Clear all obstacles
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
@@ -87,7 +104,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
 	void SetObstacleMode(EObstacleMode NewMode);
 
+	// Shuffle obstacle positions (for dynamic mode)
+	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
+	void ShuffleObstaclePositions();
+
 private:
+	// Timer for shuffling obstacles in dynamic mode
+	float ShuffleTimer = 0.0f;
 	// Generate a random position for an obstacle
 	FVector GenerateRandomObstaclePosition(const FVector& AvoidLocation, float AvoidRadius) const;
 
@@ -96,5 +119,8 @@ private:
 
 	// Create a single obstacle at the given position
 	AFPSObstacleActor* CreateObstacleAtPosition(const FVector& Position);
+
+	// Find ground level at a given position using line trace
+	float FindGroundLevel(const FVector& Position) const;
 };
 

@@ -58,11 +58,9 @@ Write-Host "4. Check logs for success:" -ForegroundColor Cyan
 Write-Host "   Look for: LogInit: Build: ... and LogWorld: Bringing up level for play took ..." -ForegroundColor White
 
 Write-Host ""
-Write-Host "Press Enter to start deployment, or Ctrl+C to cancel..." -ForegroundColor Yellow
-Read-Host
+Write-Host "Starting deployment..." -ForegroundColor Yellow
 
 try {
-    Write-Host "Starting deployment..." -ForegroundColor Cyan
     Invoke-Expression $DeployCommand
     
     if ($LASTEXITCODE -eq 0) {

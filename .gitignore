@@ -81,3 +81,27 @@ enc_temp_folder
 
 Packaged/*
 TrainingBuild/*
+
+# Batch Training Results
+# Training result directories (pattern: results_* or tps_*)
+results_*/
+tps_*/
+
+# Training logs
+**/Logs/training_seed_*.log
+
+# Neural network model files
+**/NeuralNetworks/**/*.bin
+**/NeuralNetworks/**/*.json
+
+# TensorBoard event files
+**/TensorBoard/**/events.out.tfevents.*
+
+# Training summary files
+**/Summary/batch_training_summary_*.txt
+
+# Shared memory config files (generated during training)
+**/shared-memory-*.json
+
+# other files
+*.zip

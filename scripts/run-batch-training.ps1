@@ -16,9 +16,9 @@ param(
     [switch]$SkipExisting = $true,
     # Obstacle configuration parameters
     [bool]$UseObstacles = $false,
-    [int]$MaxObstacles = 8,
-    [float]$MinObstacleSize = 100.0,
-    [float]$MaxObstacleSize = 300.0,
+    [int]$MaxObstacles = 24,
+    [float]$MinObstacleSize = 60.0,
+    [float]$MaxObstacleSize = 120.0,
     [string]$ObstacleMode = "Static"  # "Static" or "Dynamic"
 )
 
