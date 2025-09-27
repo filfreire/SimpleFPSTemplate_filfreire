@@ -20,6 +20,8 @@ if ([string]::IsNullOrEmpty($UnrealPath)) {
         $UnrealPath = "D:\unreal\UE_5.6"
     } elseif ($hostname -eq "desktop-doap6m9") {
         $UnrealPath = "E:\unreal\UE_5.6"
+    } elseif ($hostname -like "unreal-*") {
+        $UnrealPath = "c:\unreal\UE_5.6"
     } else {
         # Default path if hostname doesn't match known patterns
         $UnrealPath = "D:\unreal\UE_5.6"

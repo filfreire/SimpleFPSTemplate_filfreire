@@ -188,6 +188,10 @@ AFPSCharacterManager::AFPSCharacterManager()
 	{
 		EnginePath = TEXT("E:/unreal/UE_5.6/Engine");
 	}
+	else if (HostName.StartsWith(TEXT("unreal-")))
+	{
+		EnginePath = TEXT("c:/unreal/UE_5.6/Engine");
+	}
 	else
 	{
 		// Try to find Unreal Engine in typical installation locations
