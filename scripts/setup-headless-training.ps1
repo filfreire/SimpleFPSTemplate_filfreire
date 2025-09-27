@@ -128,8 +128,7 @@ if ($ConfigComplete) {
     Write-Host "  cd TrainingBuild\Windows\FPSGame\Binaries\Win64" -ForegroundColor White
     Write-Host "  Get-Content -Path fpscharacter_training.log -Wait" -ForegroundColor White
     
-    Write-Host "`nStarting headless training..." -ForegroundColor Green
-    & "$ProjectPath\scripts\run-training-headless.ps1"
+    Write-Host "`nReady to start training when you are!" -ForegroundColor Green
 } else {
     Write-Host "Configuration incomplete. Please complete the setup first." -ForegroundColor Yellow
 }
