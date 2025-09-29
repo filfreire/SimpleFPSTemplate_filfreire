@@ -9,6 +9,6 @@ UFPSCharacterManagerComponent::UFPSCharacterManagerComponent()
 
 void UFPSCharacterManagerComponent::PostInitProperties()
 {
-	MaxAgentNum = 128; // Set maximum number of agents this manager can handle
+	MaxAgentNum = 256; // Set maximum number of agents this manager can handle
 	Super::PostInitProperties();
 } 
