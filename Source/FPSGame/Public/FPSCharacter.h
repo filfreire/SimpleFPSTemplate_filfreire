@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "FPSCharacter.generated.h"
+#include "GameFramework/Character.h"
 
 class UInputComponent;
 class USkeletalMeshComponent;
@@ -14,16 +14,14 @@ class USoundBase;
 class UAnimSequence;
 class UPawnNoiseEmitterComponent;
 
-
 UCLASS()
 class AFPSCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-protected:
-
+  protected:
 	/** Pawn mesh: 1st person view  */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Mesh")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Mesh")
 	USkeletalMeshComponent* Mesh1PComponent;
 
 	/** Gun mesh: 1st person view (seen only by self) */
@@ -37,15 +35,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UPawnNoiseEmitterComponent* NoiseEmitterComponent;
 
-public:
+  public:
 	AFPSCharacter();
 
 	/** Projectile class to spawn */
-	UPROPERTY(EditDefaultsOnly, Category="Projectile")
+	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	TSubclassOf<AFPSProjectile> ProjectileClass;
 
 	/** Sound to play each time we fire */
-	UPROPERTY(EditDefaultsOnly, Category="Gameplay")
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
 	USoundBase* FireSound;
 
 	/** AnimMontage to play each time we fire */
@@ -55,8 +53,7 @@ public:
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Gameplay")
 	bool bIsCarryingObjective;
 
-protected:
-
+  protected:
 	/** Fires a projectile. */
 	void Fire();
 
@@ -71,7 +68,7 @@ protected:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 
-public:
+  public:
 	/** Returns Mesh1P subobject **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1PComponent; }
 
@@ -79,6 +76,4 @@ public:
 	UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComponent; }
 
 	virtual void Tick(float DeltaTime) override;
-
 };
-

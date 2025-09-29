@@ -2,11 +2,11 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "CoreMinimal.h"
 #include "FPSObstacleActor.generated.h"
+#include "GameFramework/Actor.h"
 
 /**
  * Base obstacle actor that can be used in both static and dynamic modes
@@ -16,14 +16,14 @@ UCLASS()
 class FPSGAME_API AFPSObstacleActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+  public:
 	AFPSObstacleActor();
 
-protected:
+  protected:
 	virtual void BeginPlay() override;
 
-public:	
+  public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Static mesh component for visual representation
@@ -56,8 +56,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Obstacle")
 	void InitializeObstacle(float Width, float Height, float Depth);
 
-private:
+  private:
 	// Update collision box size based on obstacle dimensions
 	void UpdateCollisionBox();
 };
-

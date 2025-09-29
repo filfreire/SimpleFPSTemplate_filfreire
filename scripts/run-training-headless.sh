@@ -170,7 +170,7 @@ echo -e "${GRAY}$EXE_NAME ${GAME_ARGS[*]}${NC}"
 # Function to handle cleanup on exit
 cleanup() {
     echo -e "\n${YELLOW}Stopping training...${NC}"
-    if [ ! -z "$TRAINING_PID" ]; then
+    if [ -n "$TRAINING_PID" ]; then
         kill "$TRAINING_PID" 2>/dev/null
         wait "$TRAINING_PID" 2>/dev/null
     fi
@@ -217,4 +217,3 @@ echo -e "${CYAN}  - Neural network snapshots in project Intermediate directory${
 echo -e "\n${GREEN}To view TensorBoard, run: ./scripts/run-tensorboard.sh${NC}"
 
 # Training session completed
-

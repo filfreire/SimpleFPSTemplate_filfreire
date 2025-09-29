@@ -78,19 +78,19 @@ function Start-TrainingSession {
         [int]$Seed,
         [string]$SessionId
     )
-    
+
     $LogFile = "training_seed_$Seed.log"
     $LogPath = Join-Path $LogsDir $LogFile
-    
+
     # Check if we should skip this run
     if ($SkipExisting -and (Test-Path $LogPath)) {
         Write-Host "Skipping seed $Seed - log file already exists" -ForegroundColor Yellow
         return "SKIPPED"
     }
-    
+
     Write-Host "`nStarting training session $SessionId (Seed: $Seed)..." -ForegroundColor Green
     Write-Host "Log file: $LogFile" -ForegroundColor Cyan
-    
+
     try {
         # Run the training session
         $Process = Start-Process -FilePath "powershell" -ArgumentList @(
@@ -105,17 +105,17 @@ function Start-TrainingSession {
             "-MaxObstacleSize", $MaxObstacleSize,
             "-ObstacleMode", $ObstacleMode
         ) -WindowStyle Hidden -PassThru -WorkingDirectory $ProjectPath
-        
+
         Write-Host "Training process started with PID: $($Process.Id)" -ForegroundColor Green
-        
+
         # Wait for completion with timeout - use more robust approach for SSH
         $timer = [System.Diagnostics.Stopwatch]::StartNew()
         $timeoutMs = $TimeoutMinutes * 60 * 1000
         $checkInterval = 5000  # Check every 5 seconds
-        
+
         while (-not $Process.HasExited -and $timer.ElapsedMilliseconds -lt $timeoutMs) {
             Start-Sleep -Milliseconds $checkInterval
-            
+
             # Check if process is still running
             try {
                 $proc = Get-Process -Id $Process.Id -ErrorAction Stop
@@ -127,29 +127,29 @@ function Start-TrainingSession {
                 break
             }
         }
-        
+
         $timer.Stop()
-        
+
         if (-not $Process.HasExited -and $timer.ElapsedMilliseconds -ge $timeoutMs) {
             Write-Warning "Training session $SessionId timed out after $($timer.Elapsed.TotalMinutes.ToString('F1')) minutes"
-            
+
             # Enhanced process termination - find and kill actual game processes
             Write-Host "Attempting to terminate training processes..." -ForegroundColor Yellow
-            
+
             # First, try to find and kill the actual game executable processes
             $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($GameProcesses) {
                 Write-Host "Found $($GameProcesses.Count) FPSGame.exe process(es)" -ForegroundColor Cyan
                 foreach ($GameProc in $GameProcesses) {
                     Write-Host "Terminating FPSGame.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
-                    
+
                     # Method 1: Use taskkill with /T flag to kill process tree
                     $taskkillResult = & taskkill /PID $GameProc.Id /T /F 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         Write-Host "taskkill /T /F succeeded for PID $($GameProc.Id)" -ForegroundColor Green
                     } else {
                         Write-Warning "taskkill /T /F failed for PID $($GameProc.Id): $taskkillResult"
-                        
+
                         # Method 2: Fallback - try to kill child processes manually
                         Write-Host "Attempting manual child process termination..." -ForegroundColor Yellow
                         try {
@@ -158,7 +158,7 @@ function Start-TrainingSession {
                                 Write-Host "Killing child process: $($child.ProcessName) (PID: $($child.ProcessId))" -ForegroundColor Gray
                                 & taskkill /PID $child.ProcessId /F 2>$null
                             }
-                            
+
                             # Now try to kill the main process again
                             & taskkill /PID $GameProc.Id /F 2>$null
                             Write-Host "Manual termination attempt completed for PID $($GameProc.Id)" -ForegroundColor Yellow
@@ -170,32 +170,32 @@ function Start-TrainingSession {
             } else {
                 Write-Host "No FPSGame.exe processes found" -ForegroundColor Yellow
             }
-            
+
             # Also terminate the PowerShell wrapper process
             Write-Host "Terminating PowerShell wrapper process (PID: $($Process.Id))..." -ForegroundColor Yellow
-            try { 
+            try {
                 Stop-Process -Id $Process.Id -Force -ErrorAction Stop
                 Write-Host "PowerShell process terminated successfully" -ForegroundColor Green
             } catch {
                 Write-Warning "Failed to terminate PowerShell process: $($_.Exception.Message)"
             }
-            
+
             # Give processes time to terminate
             Start-Sleep -Seconds 3
-            
+
             # Verify termination with multiple attempts
             $maxVerificationAttempts = 3
             $verificationAttempt = 0
             $allProcessesTerminated = $false
-            
+
             while ($verificationAttempt -lt $maxVerificationAttempts -and -not $allProcessesTerminated) {
                 $verificationAttempt++
                 Write-Host "Verification attempt $verificationAttempt/$maxVerificationAttempts..." -ForegroundColor Cyan
-                
+
                 $RemainingGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
                 if ($RemainingGameProcesses) {
                     Write-Warning "Warning: $($RemainingGameProcesses.Count) FPSGame.exe process(es) still running"
-                    
+
                     # Try one more aggressive termination attempt
                     foreach ($remainingProc in $RemainingGameProcesses) {
                         Write-Host "Force killing remaining process PID $($remainingProc.Id)..." -ForegroundColor Red
@@ -203,7 +203,7 @@ function Start-TrainingSession {
                             # Try multiple termination methods
                             & taskkill /PID $remainingProc.Id /F 2>$null
                             Start-Sleep -Milliseconds 500
-                            
+
                             # If still running, try PowerShell Stop-Process
                             $stillRunning = Get-Process -Id $remainingProc.Id -ErrorAction SilentlyContinue
                             if ($stillRunning) {
@@ -213,14 +213,14 @@ function Start-TrainingSession {
                             Write-Warning "Failed to terminate remaining process PID $($remainingProc.Id): $($_.Exception.Message)"
                         }
                     }
-                    
+
                     Start-Sleep -Seconds 2
                 } else {
                     $allProcessesTerminated = $true
                     Write-Host "All FPSGame.exe processes successfully terminated" -ForegroundColor Green
                 }
             }
-            
+
             # Final verification
             $FinalGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($FinalGameProcesses) {
@@ -232,10 +232,10 @@ function Start-TrainingSession {
             } else {
                 Write-Host "SUCCESS: All FPSGame.exe processes confirmed terminated" -ForegroundColor Green
             }
-            
+
             return "TIMEOUT"
         }
-        
+
         $ExitCode = $Process.ExitCode
         if ($ExitCode -eq 0) {
             Write-Host "Training session $SessionId completed successfully!" -ForegroundColor Green
@@ -244,7 +244,7 @@ function Start-TrainingSession {
             Write-Host "Training session $SessionId completed with exit code: $ExitCode" -ForegroundColor Yellow
             return "FAILED"
         }
-        
+
     } catch {
         Write-Error "Failed to start training session $SessionId`: $($_.Exception.Message)"
         return "ERROR"
@@ -257,16 +257,16 @@ function Copy-TrainingResults {
         [int]$Seed,
         [string]$Status
     )
-    
+
     if ($Status -eq "SUCCESS" -or $Status -eq "TIMEOUT") {
         # Copy log file
         $SourceLog = Join-Path (Join-Path $ProjectPath "TrainingBuild\Windows\FPSGame\Saved\Logs") "training_seed_$Seed.log"
         $DestLog = Join-Path $LogsDir "training_seed_$Seed.log"
-        
+
         Write-Host "Attempting to copy log file for seed $Seed..." -ForegroundColor Cyan
         Write-Host "Source: $SourceLog" -ForegroundColor Gray
         Write-Host "Destination: $DestLog" -ForegroundColor Gray
-        
+
         if (Test-Path $SourceLog) {
             Copy-Item $SourceLog $DestLog -Force
             Write-Host "Copied log file: $SourceLog -> $DestLog" -ForegroundColor Green
@@ -287,7 +287,7 @@ function Copy-TrainingResults {
                 Write-Host "Log directory does not exist: $LogDir" -ForegroundColor Red
             }
         }
-        
+
         # Copy TensorBoard runs
         $TensorBoardSource = Join-Path $ProjectPath "Intermediate\LearningAgents\TensorBoard\runs"
         if (Test-Path $TensorBoardSource) {
@@ -297,14 +297,14 @@ function Copy-TrainingResults {
                 Copy-Item $LatestRun.FullName $TensorBoardDest -Recurse -Force
             }
         }
-        
+
         # Copy neural network files
         $NeuralNetSource = Join-Path $ProjectPath "Intermediate\LearningAgents\Training0"
         if (Test-Path $NeuralNetSource) {
             $NeuralNetDest = Join-Path $NeuralNetworksDir "seed_$Seed"
             Copy-Item $NeuralNetSource $NeuralNetDest -Recurse -Force
         }
-        
+
         # Cleanup intermediate files if requested
         if ($CleanupIntermediate) {
             if (Test-Path $TensorBoardSource) {
@@ -328,9 +328,9 @@ $TotalRuns = $EndSeed - $StartSeed + 1
 for ($Seed = $StartSeed; $Seed -le $EndSeed; $Seed++) {
     $SessionId = "Run $CurrentRun/$TotalRuns"
     Write-Host "`n[$SessionId] Processing seed $Seed..." -ForegroundColor Cyan
-    
+
     $Status = Start-TrainingSession -Seed $Seed -SessionId $SessionId
-    
+
     # Track results
     switch ($Status) {
         "SUCCESS" { $CompletedRuns += $Seed }
@@ -339,12 +339,12 @@ for ($Seed = $StartSeed; $Seed -le $EndSeed; $Seed++) {
         "ERROR" { $FailedRuns += $Seed }
         "SKIPPED" { $SkippedRuns += $Seed }
     }
-    
+
     # Copy results
     Copy-TrainingResults -Seed $Seed -Status $Status
-    
+
     $CurrentRun++
-    
+
     # Add delay between runs to avoid resource conflicts
     if ($CurrentRun -le $TotalRuns) {
         Write-Host "Waiting 30 seconds before next run..." -ForegroundColor Gray

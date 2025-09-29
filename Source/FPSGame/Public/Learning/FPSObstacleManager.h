@@ -2,32 +2,31 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "CoreMinimal.h"
 #include "FPSObstacleActor.h"
-#include "Learning/ObstacleTypes.h"
-#include "GameFramework/Volume.h"
 #include "FPSObstacleManager.generated.h"
-
-
+#include "GameFramework/Volume.h"
+#include "Learning/ObstacleTypes.h"
 
 /**
  * Manages obstacles in the training environment
  * Supports both static and dynamic modes
  */
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class FPSGAME_API UFPSObstacleManager : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
+  public:
 	UFPSObstacleManager();
 
-protected:
+  protected:
 	virtual void BeginPlay() override;
 
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+  public:
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Obstacle mode
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle Management")
@@ -108,7 +107,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Obstacle Management")
 	void ShuffleObstaclePositions();
 
-private:
+  private:
 	// Timer for shuffling obstacles in dynamic mode
 	float ShuffleTimer = 0.0f;
 	// Generate a random position for an obstacle
@@ -123,4 +122,3 @@ private:
 	// Find ground level at a given position using line trace
 	float FindGroundLevel(const FVector& Position) const;
 };
-

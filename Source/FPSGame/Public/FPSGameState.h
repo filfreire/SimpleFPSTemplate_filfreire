@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameStateBase.h"
 #include "FPSGameState.generated.h"
+#include "GameFramework/GameStateBase.h"
 
 /**
  *
@@ -14,8 +14,7 @@ class FPSGAME_API AFPSGameState : public AGameStateBase
 {
 	GENERATED_BODY()
 
-public:
-    UFUNCTION(NetMulticast, Reliable)
-    void MulticastOnMissionComplete(APawn* InstigatorPawn, bool bMissionSuccess);
-
+  public:
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnMissionComplete(APawn* InstigatorPawn, bool bMissionSuccess);
 };

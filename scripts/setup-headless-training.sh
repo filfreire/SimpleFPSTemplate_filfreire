@@ -79,7 +79,7 @@ if [ "$SKIP_PACKAGE" = false ]; then
         exit 1
     fi
     echo -e "${GREEN}Training build created successfully${NC}"
-    
+
     # Note: Python content copying is now handled automatically by package-training.sh
     echo -e "${GREEN}LearningAgents Python content copied automatically${NC}"
 else
@@ -154,7 +154,7 @@ if [ "$CONFIG_COMPLETE" = true ]; then
     echo -e "${GREEN}Setup completed successfully!${NC}"
     echo -e "\n${CYAN}You can now start headless training with:${NC}"
     echo -e "${WHITE}  ./scripts/run-training-headless.sh${NC}"
-    
+
     echo -e "\n${CYAN}Optional monitoring commands:${NC}"
     echo -e "${GRAY}  # Start TensorBoard (in another terminal)${NC}"
     echo -e "${WHITE}  ./scripts/run-tensorboard.sh${NC}"
@@ -162,7 +162,7 @@ if [ "$CONFIG_COMPLETE" = true ]; then
     echo -e "\n${GRAY}  # Monitor training logs (in another terminal)${NC}"
     echo -e "${WHITE}  cd TrainingBuild/Linux/FPSGame/Binaries/Linux${NC}"
     echo -e "${WHITE}  tail -f scharacter_training.log${NC}"
-    
+
     echo -e "\n${YELLOW}Would you like to start training now? (y/N)${NC}"
     read -r start_training
     if [[ $start_training =~ ^[Yy]$ ]]; then
@@ -176,4 +176,3 @@ fi
 echo -e "\n${CYAN}For detailed information, see:${NC}"
 echo -e "${WHITE}  - docs/headless-training-setup.md${NC}"
 echo -e "${WHITE}  - docs/learning-agents-setup.md${NC}"
-

@@ -63,21 +63,23 @@ done
 get_relative_path() {
     local from_path="$1"
     local to_path="$2"
-    
+
     # Convert to absolute paths
     from_path=$(realpath "$from_path")
     to_path=$(realpath "$to_path")
-    
+
     # Find common root
     local common_root=""
-    local from_parts=($(echo "$from_path" | tr '/' ' '))
-    local to_parts=($(echo "$to_path" | tr '/' ' '))
-    
+    local from_parts
+    mapfile -t from_parts < <(echo "$from_path" | tr '/' '\n')
+    local to_parts
+    mapfile -t to_parts < <(echo "$to_path" | tr '/' '\n')
+
     local min_length=${#from_parts[@]}
-    if [ ${#to_parts[@]} -lt $min_length ]; then
+    if [ ${#to_parts[@]} -lt "$min_length" ]; then
         min_length=${#to_parts[@]}
     fi
-    
+
     for ((i=0; i<min_length; i++)); do
         if [ "${from_parts[i]}" = "${to_parts[i]}" ]; then
             common_root="$common_root/${from_parts[i]}"
@@ -85,11 +87,11 @@ get_relative_path() {
             break
         fi
     done
-    
+
     # Calculate relative path
     local up_levels=$((${#from_parts[@]} - ${#common_root//\// }))
     local relative_path=""
-    
+
     # Add ".." for each level up
     for ((i=0; i<up_levels; i++)); do
         if [ -n "$relative_path" ]; then
@@ -98,7 +100,7 @@ get_relative_path() {
             relative_path=".."
         fi
     done
-    
+
     # Add remaining path components
     local remaining_parts=("${to_parts[@]:${#common_root//\// }}")
     for part in "${remaining_parts[@]}"; do
@@ -108,7 +110,7 @@ get_relative_path() {
             relative_path="$part"
         fi
     done
-    
+
     echo "$relative_path"
 }
 
@@ -116,7 +118,7 @@ get_relative_path() {
 get_relative_path_to_engine() {
     local exe_path="$1"
     local unreal_path="$2"
-    
+
     local unreal_engine_dir="$unreal_path/Engine"
     get_relative_path "$exe_path" "$unreal_engine_dir"
 }
@@ -125,7 +127,7 @@ get_relative_path_to_engine() {
 get_relative_path_to_intermediate() {
     local exe_path="$1"
     local project_path="$2"
-    
+
     local intermediate_dir="$project_path/Intermediate"
     get_relative_path "$exe_path" "$intermediate_dir"
 }
@@ -237,7 +239,7 @@ if [ $PACKAGE_EXIT_CODE -eq 0 ]; then
     echo -e "${GREEN}PACKAGING COMPLETED SUCCESSFULLY!${NC}"
     echo -e "${CYAN}======================================${NC}"
     echo -e "${CYAN}Training build location: $PACKAGE_FOLDER${NC}"
-    
+
     # Copy LearningAgents Python content for headless training
     echo -e "\n${CYAN}Copying LearningAgents Python content...${NC}"
     if "$PROJECT_PATH/scripts/copy-learning-agents-python.sh" --project-path "$PROJECT_PATH" --training-build-dir "$OUTPUT_DIR" --unreal-path "$UNREAL_PATH"; then
@@ -246,7 +248,7 @@ if [ $PACKAGE_EXIT_CODE -eq 0 ]; then
         echo -e "${YELLOW}Warning: Failed to copy LearningAgents Python content${NC}"
         echo -e "${YELLOW}You may need to copy it manually for headless training to work${NC}"
     fi
-    
+
     # Try to find the executable
     EXE_FILES=$(find "$PACKAGE_FOLDER" -name "$TARGET" -type f 2>/dev/null)
     if [ -n "$EXE_FILES" ]; then
@@ -254,7 +256,7 @@ if [ $PACKAGE_EXIT_CODE -eq 0 ]; then
         echo "$EXE_FILES" | while read -r exe; do
             echo -e "${WHITE}  $exe${NC}"
         done
-        
+
         # Calculate relative paths for Non Editor settings
         FIRST_EXE=$(echo "$EXE_FILES" | head -n1)
         EXE_DIR=$(dirname "$FIRST_EXE")
@@ -262,17 +264,17 @@ if [ $PACKAGE_EXIT_CODE -eq 0 ]; then
         echo -e "${YELLOW}NON EDITOR PATH CONFIGURATION${NC}"
         echo -e "${CYAN}======================================${NC}"
         echo -e "${YELLOW}For your Learning Manager settings, use these relative paths:${NC}"
-        
+
         # Calculate relative path to Engine
         RELATIVE_TO_ENGINE=$(get_relative_path_to_engine "$EXE_DIR" "$UNREAL_PATH")
         echo -e "\n${GREEN}Non Editor Engine Relative Path:${NC}"
         echo -e "${WHITE}  $RELATIVE_TO_ENGINE${NC}"
-        
+
         # Calculate relative path to Intermediate
         RELATIVE_TO_INTERMEDIATE=$(get_relative_path_to_intermediate "$EXE_DIR" "$PROJECT_PATH")
         echo -e "\n${GREEN}Non Editor Intermediate Relative Path:${NC}"
         echo -e "${WHITE}  $RELATIVE_TO_INTERMEDIATE${NC}"
-        
+
         echo -e "\n${CYAN}======================================${NC}"
         echo -e "${YELLOW}NEXT STEPS FOR HEADLESS TRAINING:${NC}"
         echo -e "${CYAN}======================================${NC}"
@@ -289,4 +291,3 @@ else
     echo -e "${RED}Packaging failed with exit code: $PACKAGE_EXIT_CODE${NC}"
     exit $PACKAGE_EXIT_CODE
 fi
-

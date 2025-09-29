@@ -51,11 +51,11 @@ Write-Host "This may take several minutes..." -ForegroundColor Yellow
 
 try {
     & $BuildScript FPSGame Linux $Configuration -Project="$ProjectFile" -noclean
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Linux build completed successfully!" -ForegroundColor Green
         Write-Host "Binary location: $ProjectPath\Binaries\Linux\FPSGame-Linux-$Configuration" -ForegroundColor Cyan
-        
+
         # Install Learning Agents dependencies for headless training
         Write-Host "`nInstalling Learning Agents dependencies..." -ForegroundColor Yellow
         try {
@@ -68,7 +68,7 @@ try {
         } catch {
             Write-Warning "Failed to install Learning Agents dependencies: $_"
         }
-        
+
         # Install TensorBoard dependencies
         Write-Host "`nInstalling TensorBoard dependencies..." -ForegroundColor Yellow
         try {
@@ -89,7 +89,3 @@ try {
     Write-Error "Error occurred during Linux build: $($_.Exception.Message)"
     exit 1
 }
-
-
-
-

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
 #include "FPSPlayerController.generated.h"
+#include "GameFramework/PlayerController.h"
 
 // Forward declarations
 class AFPSSpectatorCamera;
@@ -17,11 +17,11 @@ class FPSGAME_API AFPSPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	// Constructor
 	AFPSPlayerController();
 
-protected:
+  protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -58,8 +58,7 @@ protected:
 	void SpectatorTurn(float Value);
 	void SpectatorLookUp(float Value);
 
-public:
-    UFUNCTION(BlueprintImplementableEvent, Category = "PlayerController")
-    void OnMissionCompleted(APawn* InstigatorPawn, bool bMissionSuccess);
-
+  public:
+	UFUNCTION(BlueprintImplementableEvent, Category = "PlayerController")
+	void OnMissionCompleted(APawn* InstigatorPawn, bool bMissionSuccess);
 };

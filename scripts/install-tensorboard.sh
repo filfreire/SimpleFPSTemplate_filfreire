@@ -54,7 +54,7 @@ if [ -z "$PYTHON_PATH" ]; then
         "$PROJECT_PATH/Intermediate/PipInstall/bin/python3"
         "$PROJECT_PATH/Intermediate/PipInstall/Scripts/python3"
     )
-    
+
     for path in "${POSSIBLE_PATHS[@]}"; do
         if [ -f "$path" ]; then
             PYTHON_PATH="$path"
@@ -90,7 +90,7 @@ fi
 echo -e "${YELLOW}Installing TensorBoard...${NC}"
 if "$PYTHON_PATH" -m pip install tensorboard; then
     echo -e "${GREEN}TensorBoard installed successfully!${NC}"
-    
+
     # Verify installation
     if "$PYTHON_PATH" -c "import tensorboard; print('TensorBoard version:', tensorboard.__version__)" 2>/dev/null; then
         echo -e "${GREEN}TensorBoard verification successful!${NC}"

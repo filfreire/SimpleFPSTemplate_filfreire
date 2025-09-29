@@ -1,0 +1,78 @@
+exclude: \.uproject$
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=10000]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # C++ formatting with clang-format
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v16.0.6
+    hooks:
+      - id: clang-format
+        files: \.(cpp|h|hpp|c|cc|cxx)$
+        args: [--style=file]
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.5
+    hooks:
+      - id: shellcheck
+        files: \.sh$
+
+  # PowerShell script analysis
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: forbid-crlf
+        files: \.(ps1|psm1|psd1)$
+      - id: remove-crlf
+        files: \.(ps1|psm1|psd1)$
+
+  # YAML linting (disabled)
+  # - repo: https://github.com/adrienverge/yamllint
+  #   rev: v1.32.0
+  #   hooks:
+  #     - id: yamllint
+  #       args: [-c=.yamllint.yaml]
+
+  # Python (if any Python files exist)
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        files: \.py$
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        files: \.py$
+
+  # Unreal Engine specific checks
+  - repo: local
+    hooks:
+      - id: check-line-endings-cpp
+        name: Check C++ files have consistent line endings
+        entry: bash -c 'for file in "$@"; do if file "$file" | grep -q CRLF; then echo "CRLF line endings found in $file"; exit 1; fi; done'
+        language: system
+        files: \.(cpp|h|hpp|c|cc|cxx)$
+        pass_filenames: true
+
+      - id: check-consistent-tabs-cpp
+        name: Check C++ files use tabs for indentation
+        entry: bash -c 'for file in "$@"; do if grep -P "^ +" "$file" >/dev/null 2>&1; then echo "Space indentation found in $file (should use tabs)"; exit 1; fi; done'
+        language: system
+        files: \.(cpp|h|hpp|c|cc|cxx)$
+        pass_filenames: true

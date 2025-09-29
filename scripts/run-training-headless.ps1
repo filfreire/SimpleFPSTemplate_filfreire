@@ -153,12 +153,12 @@ try {
     # Start the training process (use different window style based on environment)
     $WindowStyle = if ($env:SSH_CLIENT -or $env:SSH_TTY) { "Normal" } else { "Hidden" }
     $Process = Start-Process -FilePath $GameExecutable -ArgumentList $GameArgs -WindowStyle $WindowStyle -PassThru
-    
+
     Write-Host "`nTraining process started with PID: $($Process.Id)" -ForegroundColor Green
     Write-Host "Window style: $WindowStyle (SSH detected: $($env:SSH_CLIENT -or $env:SSH_TTY))" -ForegroundColor Cyan
     Write-Host "You can monitor the log file in another terminal with:" -ForegroundColor Cyan
     Write-Host "  Get-Content -Path '$LogFile' -Wait" -ForegroundColor White
-    
+
     # Wait for completion with optional timeout
     Write-Host "`nWaiting for training to complete..." -ForegroundColor Yellow
 
@@ -166,17 +166,17 @@ try {
     if ($TimeoutMinutes -gt 0) {
         $ms = [int]($TimeoutMinutes * 60 * 1000)
         Write-Host "Timeout set to $TimeoutMinutes minute(s)..." -ForegroundColor Cyan
-        
+
         # Use a more robust timeout mechanism for SSH environments
         $timeoutReached = $false
-        
+
         # Create a timer-based approach that's more reliable in SSH
         $timer = [System.Diagnostics.Stopwatch]::StartNew()
         $checkInterval = 5000  # Check every 5 seconds
-        
+
         while (-not $Process.HasExited -and $timer.ElapsedMilliseconds -lt $ms) {
             Start-Sleep -Milliseconds $checkInterval
-            
+
             # Check if process is still running
             try {
                 $proc = Get-Process -Id $Process.Id -ErrorAction Stop
@@ -188,21 +188,21 @@ try {
                 break
             }
         }
-        
+
         # Check if we timed out
         if (-not $Process.HasExited -and $timer.ElapsedMilliseconds -ge $ms) {
             $timeoutReached = $true
         }
-        
+
         $timer.Stop()
-        
+
         if ($timeoutReached) {
             $timedOut = $true
             Write-Warning "Timeout hit after $($timer.Elapsed.TotalMinutes.ToString('F1')) minutes. Attempting to terminate the training process tree (PID $($Process.Id))..."
-            
+
             # Enhanced process termination for SSH environments
             $terminationSuccess = $false
-            
+
             # First, try to find and kill any FPSGame processes that might be running
             $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($GameProcesses) {
@@ -218,7 +218,7 @@ try {
                     }
                 }
             }
-            
+
             if ($KillTreeOnTimeout) {
                 # Try taskkill first (most effective for process trees)
                 Write-Host "Attempting to kill process tree with taskkill..." -ForegroundColor Yellow
@@ -228,11 +228,11 @@ try {
                     Write-Host "Process tree terminated successfully with taskkill" -ForegroundColor Green
                 }
             }
-            
+
             if (-not $terminationSuccess) {
                 # Fallback: try PowerShell Stop-Process
                 Write-Host "Attempting to kill process with PowerShell Stop-Process..." -ForegroundColor Yellow
-                try { 
+                try {
                     Stop-Process -Id $Process.Id -Force -ErrorAction Stop
                     $terminationSuccess = $true
                     Write-Host "Process terminated successfully with Stop-Process" -ForegroundColor Green
@@ -240,11 +240,11 @@ try {
                     Write-Warning "Stop-Process failed: $($_.Exception.Message)"
                 }
             }
-            
+
             # Additional cleanup for stubborn processes
             if (-not $terminationSuccess) {
                 Write-Host "Attempting additional cleanup methods..." -ForegroundColor Yellow
-                
+
                 # Try to find and kill child processes
                 try {
                     $childProcesses = Get-WmiObject Win32_Process | Where-Object { $_.ParentProcessId -eq $Process.Id }
@@ -255,7 +255,7 @@ try {
                 } catch {
                     Write-Warning "Failed to enumerate child processes: $($_.Exception.Message)"
                 }
-                
+
                 # Final attempt with taskkill /F
                 try {
                     & taskkill /PID $Process.Id /F 2>$null
@@ -264,10 +264,10 @@ try {
                     Write-Warning "Final cleanup attempt failed: $($_.Exception.Message)"
                 }
             }
-            
+
             # Give the OS time to clean up
             Start-Sleep -Seconds 3
-            
+
             # Verify termination
             try {
                 $proc = Get-Process -Id $Process.Id -ErrorAction Stop
@@ -293,7 +293,7 @@ try {
     } else {
         Write-Host "`nTraining completed with exit code: $ExitCode" -ForegroundColor Yellow
     }
-    
+
 } catch {
     Write-Error "Failed to start training: $_"
     exit 1

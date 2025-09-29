@@ -22,7 +22,7 @@ The spectator camera system provides:
 
 ### Controls in Spectator Mode
 - **W/S**: Move forward/backward
-- **A/D**: Move left/right  
+- **A/D**: Move left/right
 - **Q/E**: Move up/down
 - **Mouse**: Look around
 - **F**: Return to character control
@@ -60,4 +60,4 @@ The spectator system is automatically set up when you use the FPSPlayerControlle
 
 ### Performance
 - The spectator camera is lightweight and shouldn't impact game performance
-- Only one spectator camera is created per player controller 
+- Only one spectator camera is created per player controller

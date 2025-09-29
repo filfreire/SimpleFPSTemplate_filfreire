@@ -43,7 +43,7 @@ In the **FPSCharacterManager** actor properties:
 #### Neural Networks
 You need to create and assign four neural network assets:
 - **Encoder Neural Network**
-- **Policy Neural Network** 
+- **Policy Neural Network**
 - **Decoder Neural Network**
 - **Critic Neural Network**
 
@@ -110,7 +110,7 @@ The agents can perform:
 ## Inference
 
 Once trained:
-1. Set Run Mode to "Inference" 
+1. Set Run Mode to "Inference"
 2. The trained agents will use their learned policy to navigate to targets
 3. No training updates occur during inference
 
@@ -148,4 +148,4 @@ Source/FPSGame/Learning/
 - Adjust neural network architectures for better performance
 - Create multiple target configurations for varied training scenarios
 - Implement additional observations (health, inventory, etc.) if needed
-- Add more complex action spaces (jumping, shooting, etc.) for advanced behaviors 
+- Add more complex action spaces (jumping, shooting, etc.) for advanced behaviors

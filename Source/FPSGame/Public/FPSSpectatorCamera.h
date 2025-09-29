@@ -2,21 +2,21 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
+#include "CoreMinimal.h"
 #include "FPSSpectatorCamera.generated.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/SpringArmComponent.h"
 
 UCLASS()
 class FPSGAME_API AFPSSpectatorCamera : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+  public:
 	AFPSSpectatorCamera();
 
-protected:
+  protected:
 	virtual void BeginPlay() override;
 
 	/** Camera component for spectating */
@@ -35,7 +35,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
 	float LookSensitivity = 2.0f;
 
-public:	
+  public:
 	virtual void Tick(float DeltaTime) override;
 
 	/** Handle movement input */
@@ -58,4 +58,4 @@ public:
 	/** Get the camera component for view targeting */
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	UCameraComponent* GetSpectatorCamera() const { return CameraComponent; }
-}; 
+};

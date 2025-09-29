@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "FPSBlackHole.generated.h"
+#include "GameFramework/Actor.h"
 
 class USphereComponent;
 
@@ -13,12 +13,11 @@ class FPSGAME_API AFPSBlackHole : public AActor
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	// Sets default values for this actor's properties
 	AFPSBlackHole();
 
-protected:
-
+  protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UStaticMeshComponent* MeshComp;
 
@@ -32,10 +31,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	                    int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-public:
+  public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 };

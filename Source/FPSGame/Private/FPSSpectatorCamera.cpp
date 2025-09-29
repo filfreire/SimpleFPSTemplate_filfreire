@@ -1,9 +1,10 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "FPSSpectatorCamera.h"
+
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "Components/SceneComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 
 AFPSSpectatorCamera::AFPSSpectatorCamera()
 {
@@ -30,7 +31,7 @@ AFPSSpectatorCamera::AFPSSpectatorCamera()
 void AFPSSpectatorCamera::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	// Position the camera at a good overview location by default
 	SetActorLocation(FVector(0, 0, 1000));
 	SetActorRotation(FRotator(-45, 0, 0));
@@ -89,4 +90,4 @@ void AFPSSpectatorCamera::LookUp(float Value)
 		float NewPitch = FMath::ClampAngle(CurrentRotation.Pitch + (Value * LookSensitivity), -90.0f, 90.0f);
 		SetActorRotation(FRotator(NewPitch, CurrentRotation.Yaw, CurrentRotation.Roll));
 	}
-} 
+}

@@ -2,26 +2,26 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
+#include "CoreMinimal.h"
 #include "FPSTargetActor.generated.h"
+#include "GameFramework/Actor.h"
 
 UCLASS()
 class FPSGAME_API AFPSTargetActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+  public:
 	AFPSTargetActor();
 
-protected:
+  protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* MeshComponent;
 
-public:	
+  public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Reset the target to a new random location within the specified bounds
@@ -34,4 +34,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Learning")
 	float ReachDistance = 150.0f;
-}; 
+};

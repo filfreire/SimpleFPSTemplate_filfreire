@@ -54,21 +54,21 @@ function Stop-OrphanedTrainingProcesses {
     Write-Host "======================================" -ForegroundColor Cyan
     Write-Host "CHECKING FOR ORPHANED TRAINING PROCESSES" -ForegroundColor Yellow
     Write-Host "======================================" -ForegroundColor Cyan
-    
+
     # Find and kill any running FPSGame processes
     $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
     if ($GameProcesses) {
         Write-Host "Found $($GameProcesses.Count) orphaned FPSGame.exe process(es)" -ForegroundColor Yellow
         foreach ($GameProc in $GameProcesses) {
             Write-Host "Terminating orphaned FPSGame.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
-            
+
             # Method 1: Use taskkill with /T flag to kill process tree
             $taskkillResult = & taskkill /PID $GameProc.Id /T /F 2>&1
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "taskkill /T /F succeeded for PID $($GameProc.Id)" -ForegroundColor Green
             } else {
                 Write-Warning "taskkill /T /F failed for PID $($GameProc.Id): $taskkillResult"
-                
+
                 # Method 2: Fallback - try to kill child processes manually
                 Write-Host "Attempting manual child process termination..." -ForegroundColor Yellow
                 try {
@@ -77,7 +77,7 @@ function Stop-OrphanedTrainingProcesses {
                         Write-Host "Killing child process: $($child.ProcessName) (PID: $($child.ProcessId))" -ForegroundColor Gray
                         & taskkill /PID $child.ProcessId /F 2>$null
                     }
-                    
+
                     # Now try to kill the main process again
                     & taskkill /PID $GameProc.Id /F 2>$null
                     Write-Host "Manual termination attempt completed for PID $($GameProc.Id)" -ForegroundColor Yellow
@@ -86,23 +86,23 @@ function Stop-OrphanedTrainingProcesses {
                 }
             }
         }
-        
+
         # Give processes time to terminate
         Start-Sleep -Seconds 3
-        
+
         # Verify termination with multiple attempts
         $maxVerificationAttempts = 3
         $verificationAttempt = 0
         $allProcessesTerminated = $false
-        
+
         while ($verificationAttempt -lt $maxVerificationAttempts -and -not $allProcessesTerminated) {
             $verificationAttempt++
             Write-Host "Verification attempt $verificationAttempt/$maxVerificationAttempts..." -ForegroundColor Cyan
-            
+
             $RemainingGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($RemainingGameProcesses) {
                 Write-Warning "Warning: $($RemainingGameProcesses.Count) FPSGame.exe process(es) still running"
-                
+
                 # Try one more aggressive termination attempt
                 foreach ($remainingProc in $RemainingGameProcesses) {
                     Write-Host "Force killing remaining process PID $($remainingProc.Id)..." -ForegroundColor Red
@@ -110,7 +110,7 @@ function Stop-OrphanedTrainingProcesses {
                         # Try multiple termination methods
                         & taskkill /PID $remainingProc.Id /F 2>$null
                         Start-Sleep -Milliseconds 500
-                        
+
                         # If still running, try PowerShell Stop-Process
                         $stillRunning = Get-Process -Id $remainingProc.Id -ErrorAction SilentlyContinue
                         if ($stillRunning) {
@@ -120,14 +120,14 @@ function Stop-OrphanedTrainingProcesses {
                         Write-Warning "Failed to terminate remaining process PID $($remainingProc.Id): $($_.Exception.Message)"
                     }
                 }
-                
+
                 Start-Sleep -Seconds 2
             } else {
                 $allProcessesTerminated = $true
                 Write-Host "All FPSGame.exe processes successfully terminated" -ForegroundColor Green
             }
         }
-        
+
         # Final verification
         $FinalGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
         if ($FinalGameProcesses) {
@@ -142,7 +142,7 @@ function Stop-OrphanedTrainingProcesses {
     } else {
         Write-Host "No orphaned FPSGame.exe processes found" -ForegroundColor Green
     }
-    
+
     Write-Host ""
 }
 
@@ -156,21 +156,21 @@ function Invoke-TrainingRun {
         [string]$Description,
         [hashtable]$Parameters
     )
-    
+
     Write-Host "======================================" -ForegroundColor Cyan
     Write-Host "RUN $RunName`: $Description" -ForegroundColor Yellow
     Write-Host "======================================" -ForegroundColor Cyan
-    
+
     # Display parameters
     Write-Host "Parameters:" -ForegroundColor White
     foreach ($key in $Parameters.Keys) {
         Write-Host "  $key`: $($Parameters[$key])" -ForegroundColor Gray
     }
     Write-Host ""
-    
+
     # Create unique log file name
     $LogFile = "special_${RunName}_seed_$($Parameters.RandomSeed).log"
-    
+
     # Build the command arguments as a string
     $cmdArgs = @()
     foreach ($key in $Parameters.Keys) {
@@ -186,21 +186,21 @@ function Invoke-TrainingRun {
             $cmdArgs += "-$key $value"
         }
     }
-    
+
     # Add log file parameter
     $cmdArgs += "-LogFile $LogFile"
-    
+
     $commandString = ".\scripts\run-training-headless.ps1 " + ($cmdArgs -join ' ')
-    
+
     Write-Host "Executing training run..." -ForegroundColor Green
     Write-Host "Log file: $LogFile" -ForegroundColor Cyan
     Write-Host "Command: $commandString" -ForegroundColor Gray
     Write-Host ""
-    
+
     try {
         # Execute the training script using Invoke-Expression to properly parse the command
         Invoke-Expression $commandString
-        
+
         # Check exit code - treat timeout (-1) as successful
         if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1) {
             if ($LASTEXITCODE -eq -1) {
@@ -208,7 +208,7 @@ function Invoke-TrainingRun {
             } else {
                 Write-Host "Run $RunName completed successfully!" -ForegroundColor Green
             }
-            
+
             # Copy results
             Copy-TrainingResults -RunName $RunName -LogFile $LogFile -Seed $Parameters.RandomSeed
             return $true
@@ -220,7 +220,7 @@ function Invoke-TrainingRun {
         Write-Host "Run $RunName failed with error: $($_.Exception.Message)" -ForegroundColor Red
         return $false
     }
-    
+
     Write-Host ""
 }
 
@@ -231,9 +231,9 @@ function Copy-TrainingResults {
         [string]$LogFile,
         [int]$Seed
     )
-    
+
     Write-Host "Copying results for $RunName run..." -ForegroundColor Cyan
-    
+
     # Copy log file - check multiple possible locations
     $PossibleLogPaths = @(
         Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs") $LogFile,
@@ -241,7 +241,7 @@ function Copy-TrainingResults {
         Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows") $LogFile,
         Join-Path $ProjectDir $LogFile
     )
-    
+
     $LogCopied = $false
     foreach ($SourceLog in $PossibleLogPaths) {
         Write-Host "Checking for log file: $SourceLog" -ForegroundColor Gray
@@ -253,7 +253,7 @@ function Copy-TrainingResults {
             break
         }
     }
-    
+
     if (-not $LogCopied) {
         Write-Warning "Log file not found in any expected location: $LogFile"
         # Check what log files are actually available
@@ -263,7 +263,7 @@ function Copy-TrainingResults {
             Join-Path $ProjectDir "TrainingBuild\Windows",
             $ProjectDir
         )
-        
+
         foreach ($LogDir in $LogDirs) {
             if (Test-Path $LogDir) {
                 $AvailableLogs = Get-ChildItem $LogDir -Filter "*.log" -ErrorAction SilentlyContinue
@@ -274,7 +274,7 @@ function Copy-TrainingResults {
             }
         }
     }
-    
+
     # Copy TensorBoard runs
     $TensorBoardSource = Join-Path $ProjectDir "Intermediate\LearningAgents\TensorBoard\runs"
     if (Test-Path $TensorBoardSource) {
@@ -289,7 +289,7 @@ function Copy-TrainingResults {
     } else {
         Write-Warning "TensorBoard source directory not found: $TensorBoardSource"
     }
-    
+
     # Copy neural network files
     $NeuralNetSource = Join-Path $ProjectDir "Intermediate\LearningAgents\Training0"
     if (Test-Path $NeuralNetSource) {
@@ -299,7 +299,7 @@ function Copy-TrainingResults {
     } else {
         Write-Warning "Neural network source directory not found: $NeuralNetSource"
     }
-    
+
     Write-Host ""
 }
 
@@ -353,7 +353,7 @@ $StartTime = Get-Date
 # Conservative: Low learning rate, small batches
 if (-not $SkipConservative) {
     $Results["Conservative"] = Invoke-TrainingRun -RunName "Conservative" -Description "CONSERVATIVE / LOW LEARNING RATE" -Parameters $ConservativeParams
-    
+
     if ($StopOnError -and -not $Results["Conservative"]) {
         Write-Host "Stopping execution due to error in Conservative run (StopOnError flag set)" -ForegroundColor Red
         exit 1
@@ -366,7 +366,7 @@ if (-not $SkipConservative) {
 # Aggressive: High learning rate, large batches
 if (-not $SkipAggressive) {
     $Results["Aggressive"] = Invoke-TrainingRun -RunName "Aggressive" -Description "AGGRESSIVE / HIGH LEARNING RATE" -Parameters $AggressiveParams
-    
+
     if ($StopOnError -and -not $Results["Aggressive"]) {
         Write-Host "Stopping execution due to error in Aggressive run (StopOnError flag set)" -ForegroundColor Red
         exit 1
@@ -379,7 +379,7 @@ if (-not $SkipAggressive) {
 # Balanced: Medium learning rate, moderate batches
 if (-not $SkipBalanced) {
     $Results["Balanced"] = Invoke-TrainingRun -RunName "Balanced" -Description "BALANCED / MEDIUM LEARNING RATE" -Parameters $BalancedParams
-    
+
     if ($StopOnError -and -not $Results["Balanced"]) {
         Write-Host "Stopping execution due to error in Balanced run (StopOnError flag set)" -ForegroundColor Red
         exit 1
@@ -402,7 +402,7 @@ Total Duration: $($TotalDuration.ToString("hh\:mm\:ss"))
 
 CONFIGURATION:
 - Conservative: Low learning rate, small batches (5 min timeout)
-- Aggressive: High learning rate, large batches (5 min timeout)  
+- Aggressive: High learning rate, large batches (5 min timeout)
 - Balanced: Medium learning rate, moderate batches (5 min timeout)
 
 RESULTS:

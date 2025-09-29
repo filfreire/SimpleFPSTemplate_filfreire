@@ -8,6 +8,6 @@
 UENUM(BlueprintType)
 enum class EObstacleMode : uint8
 {
-	Static		UMETA(DisplayName = "Static Mode"),
-	Dynamic		UMETA(DisplayName = "Dynamic Mode")
+	Static UMETA(DisplayName = "Static Mode"),
+	Dynamic UMETA(DisplayName = "Dynamic Mode")
 };

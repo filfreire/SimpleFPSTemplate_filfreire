@@ -178,19 +178,19 @@ START_TIME=$(date)
 run_training_session() {
     local seed=$1
     local session_id=$2
-    
+
     local log_file="training_seed_${seed}.log"
     local log_path="$LOGS_DIR/$log_file"
-    
+
     # Check if we should skip this run
     if [ "$SKIP_EXISTING" = true ] && [ -f "$log_path" ]; then
         echo -e "${YELLOW}Skipping seed $seed - log file already exists${NC}"
         return 2  # SKIPPED
     fi
-    
+
     echo -e "\n${GREEN}Starting training session $session_id (Seed: $seed)...${NC}"
     echo -e "${CYAN}Log file: $log_file${NC}"
-    
+
     # Run the training session
     if timeout "${TIMEOUT_MINUTES}m" "$PROJECT_PATH/scripts/run-training-headless.sh" \
         --log-file "$log_file" \
@@ -220,29 +220,31 @@ run_training_session() {
 copy_training_results() {
     local seed=$1
     local status=$2
-    
+
     if [ "$status" = "SUCCESS" ] || [ "$status" = "TIMEOUT" ]; then
         # Copy log file
         local source_log="$PROJECT_PATH/$TRAINING_BUILD_DIR/Linux/$EXE_NAME/Saved/Logs/training_seed_${seed}.log"
         local dest_log="$LOGS_DIR/training_seed_${seed}.log"
-        
+
         echo -e "${CYAN}Attempting to copy log file for seed $seed...${NC}"
         echo -e "${GRAY}Source: $source_log${NC}"
         echo -e "${GRAY}Destination: $dest_log${NC}"
-        
+
         if [ -f "$source_log" ]; then
             cp "$source_log" "$dest_log"
             echo -e "${GREEN}Copied log file: $source_log -> $dest_log${NC}"
         else
             echo -e "${YELLOW}Log file not found: $source_log${NC}"
             # Check if the directory exists
-            local log_dir=$(dirname "$source_log")
+            local log_dir
+            log_dir=$(dirname "$source_log")
             if [ -d "$log_dir" ]; then
                 echo -e "${YELLOW}Log directory exists: $log_dir${NC}"
-                local available_logs=$(ls "$log_dir"/*.log 2>/dev/null | wc -l)
+                local available_logs
+                available_logs=$(find "$log_dir" -name "*.log" 2>/dev/null | wc -l)
                 if [ "$available_logs" -gt 0 ]; then
                     echo -e "${YELLOW}Available log files:${NC}"
-                    ls "$log_dir"/*.log 2>/dev/null | while read -r log_file; do
+                    find "$log_dir" -name "*.log" 2>/dev/null | while read -r log_file; do
                         echo -e "${GRAY}  - $(basename "$log_file")${NC}"
                     done
                 else
@@ -252,24 +254,25 @@ copy_training_results() {
                 echo -e "${RED}Log directory does not exist: $log_dir${NC}"
             fi
         fi
-        
+
         # Copy TensorBoard runs
         local tensorboard_source="$PROJECT_PATH/Intermediate/LearningAgents/TensorBoard/runs"
         if [ -d "$tensorboard_source" ]; then
-            local latest_run=$(ls -t "$tensorboard_source" | head -n1)
+            local latest_run
+            latest_run=$(find "$tensorboard_source" -maxdepth 1 -type d -not -path "$tensorboard_source" -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2- | xargs basename)
             if [ -n "$latest_run" ]; then
                 local tensorboard_dest="$TENSORBOARD_DIR/seed_${seed}"
                 cp -r "$tensorboard_source/$latest_run" "$tensorboard_dest"
             fi
         fi
-        
+
         # Copy neural network files
         local neural_net_source="$PROJECT_PATH/Intermediate/LearningAgents/Training0"
         if [ -d "$neural_net_source" ]; then
             local neural_net_dest="$NEURAL_NETWORKS_DIR/seed_${seed}"
             cp -r "$neural_net_source" "$neural_net_dest"
         fi
-        
+
         # Cleanup intermediate files if requested
         if [ "$CLEANUP_INTERMEDIATE" = true ]; then
             rm -rf "$tensorboard_source" 2>/dev/null
@@ -288,18 +291,18 @@ current_run=1
 for ((seed=START_SEED; seed<=END_SEED; seed++)); do
     session_id="Run $current_run/$TOTAL_RUNS"
     echo -e "\n${CYAN}[$session_id] Processing seed $seed...${NC}"
-    
+
     run_training_session "$seed" "$session_id"
     status=$?
-    
+
     # Track results
     case $status in
-        0) COMPLETED_RUNS+=($seed) ;;  # SUCCESS
-        1) COMPLETED_RUNS+=($seed) ;;  # TIMEOUT - now treated as successful
-        2) SKIPPED_RUNS+=($seed) ;;   # SKIPPED
-        3) FAILED_RUNS+=($seed) ;;    # FAILED
+        0) COMPLETED_RUNS+=("$seed") ;;  # SUCCESS
+        1) COMPLETED_RUNS+=("$seed") ;;  # TIMEOUT - now treated as successful
+        2) SKIPPED_RUNS+=("$seed") ;;   # SKIPPED
+        3) FAILED_RUNS+=("$seed") ;;    # FAILED
     esac
-    
+
     # Copy results
     case $status in
         0) copy_training_results "$seed" "SUCCESS" ;;
@@ -307,9 +310,9 @@ for ((seed=START_SEED; seed<=END_SEED; seed++)); do
         2) copy_training_results "$seed" "SKIPPED" ;;
         3) copy_training_results "$seed" "FAILED" ;;
     esac
-    
+
     ((current_run++))
-    
+
     # Add delay between runs to avoid resource conflicts
     if [ $current_run -le $TOTAL_RUNS ]; then
         echo -e "${GRAY}Waiting 30 seconds before next run...${NC}"

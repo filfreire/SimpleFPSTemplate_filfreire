@@ -15,18 +15,18 @@ param(
 # Helper function to calculate relative path (compatible with older PowerShell versions)
 function Get-RelativePath {
     param([string]$FromPath, [string]$ToPath)
-    
+
     $FromPathNormalized = (Resolve-Path $FromPath).Path.TrimEnd('\')
     $ToPathNormalized = (Resolve-Path $ToPath).Path.TrimEnd('\')
-    
+
     # Split paths into components
     $FromParts = $FromPathNormalized.Split('\')
     $ToParts = $ToPathNormalized.Split('\')
-    
+
     # Find common root
     $CommonLength = 0
     $MinLength = [Math]::Min($FromParts.Length, $ToParts.Length)
-    
+
     for ($i = 0; $i -lt $MinLength; $i++) {
         if ($FromParts[$i] -eq $ToParts[$i]) {
             $CommonLength++
@@ -34,21 +34,21 @@ function Get-RelativePath {
             break
         }
     }
-    
+
     # Calculate relative path
     $UpLevels = $FromParts.Length - $CommonLength
     $RelativeParts = @()
-    
+
     # Add ".." for each level up
     for ($i = 0; $i -lt $UpLevels; $i++) {
         $RelativeParts += ".."
     }
-    
+
     # Add remaining path components
     for ($i = $CommonLength; $i -lt $ToParts.Length; $i++) {
         $RelativeParts += $ToParts[$i]
     }
-    
+
     $RelativePath = $RelativeParts -join '/'
     return $RelativePath
 }
@@ -56,7 +56,7 @@ function Get-RelativePath {
 # Helper function to calculate relative path to Engine
 function Get-RelativePathToEngine {
     param([string]$ExePath, [string]$UnrealPath)
-    
+
     $UnrealEngineDir = Join-Path $UnrealPath "Engine"
     return Get-RelativePath -FromPath $ExePath -ToPath $UnrealEngineDir
 }
@@ -64,7 +64,7 @@ function Get-RelativePathToEngine {
 # Helper function to calculate relative path to Intermediate
 function Get-RelativePathToIntermediate {
     param([string]$ExePath, [string]$ProjectPath)
-    
+
     $IntermediateDir = Join-Path $ProjectPath "Intermediate"
     return Get-RelativePath -FromPath $ExePath -ToPath $IntermediateDir
 }
@@ -158,7 +158,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "PACKAGING COMPLETED SUCCESSFULLY!" -ForegroundColor Green
     Write-Host "======================================" -ForegroundColor Green
     Write-Host "Training build location: $PackageFolder" -ForegroundColor Cyan
-    
+
     # Install Learning Agents dependencies for headless training
     Write-Host "`nInstalling Learning Agents dependencies..." -ForegroundColor Yellow
     try {
@@ -171,7 +171,7 @@ if ($LASTEXITCODE -eq 0) {
     } catch {
         Write-Warning "Failed to install Learning Agents dependencies: $_"
     }
-    
+
     # Try to find the executable
     $ExeFiles = Get-ChildItem -Path $PackageFolder -Filter "*.exe" -Recurse
     if ($ExeFiles.Count -gt 0) {
@@ -179,7 +179,7 @@ if ($LASTEXITCODE -eq 0) {
         foreach ($exe in $ExeFiles) {
             Write-Host "  $($exe.FullName)" -ForegroundColor White
         }
-        
+
         # Calculate relative paths for Non Editor settings
         $FirstExe = $ExeFiles[0]
         $ExeDir = $FirstExe.DirectoryName
@@ -187,17 +187,17 @@ if ($LASTEXITCODE -eq 0) {
         Write-Host "NON EDITOR PATH CONFIGURATION" -ForegroundColor Yellow
         Write-Host "======================================" -ForegroundColor Cyan
         Write-Host "For your Learning Manager settings, use these relative paths:" -ForegroundColor Yellow
-        
+
         # Calculate relative path to Engine
         $RelativeToEngine = Get-RelativePathToEngine -ExePath $ExeDir -UnrealPath $UnrealPath
         Write-Host "`nNon Editor Engine Relative Path:" -ForegroundColor Green
         Write-Host "  $RelativeToEngine" -ForegroundColor White
-        
+
         # Calculate relative path to Intermediate
         $RelativeToIntermediate = Get-RelativePathToIntermediate -ExePath $ExeDir -ProjectPath $ProjectPath
         Write-Host "`nNon Editor Intermediate Relative Path:" -ForegroundColor Green
         Write-Host "  $RelativeToIntermediate" -ForegroundColor White
-        
+
         Write-Host "`n======================================" -ForegroundColor Cyan
         Write-Host "NEXT STEPS FOR HEADLESS TRAINING:" -ForegroundColor Yellow
         Write-Host "======================================" -ForegroundColor Cyan
@@ -213,4 +213,3 @@ if ($LASTEXITCODE -eq 0) {
     Write-Error "Packaging failed with exit code: $LASTEXITCODE"
     exit $LASTEXITCODE
 }
-
