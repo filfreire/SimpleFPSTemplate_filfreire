@@ -234,15 +234,45 @@ function Copy-TrainingResults {
     
     Write-Host "Copying results for $RunName run..." -ForegroundColor Cyan
     
-    # Copy log file
-    $SourceLog = Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs") $LogFile
-    $DestLog = Join-Path $LogsDir $LogFile
+    # Copy log file - check multiple possible locations
+    $PossibleLogPaths = @(
+        Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs") $LogFile,
+        Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame") $LogFile,
+        Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows") $LogFile,
+        Join-Path $ProjectDir $LogFile
+    )
     
-    if (Test-Path $SourceLog) {
-        Copy-Item $SourceLog $DestLog -Force
-        Write-Host "Copied log file: $SourceLog -> $DestLog" -ForegroundColor Green
-    } else {
-        Write-Warning "Log file not found: $SourceLog"
+    $LogCopied = $false
+    foreach ($SourceLog in $PossibleLogPaths) {
+        Write-Host "Checking for log file: $SourceLog" -ForegroundColor Gray
+        if (Test-Path $SourceLog) {
+            $DestLog = Join-Path $LogsDir $LogFile
+            Copy-Item $SourceLog $DestLog -Force
+            Write-Host "Copied log file: $SourceLog -> $DestLog" -ForegroundColor Green
+            $LogCopied = $true
+            break
+        }
+    }
+    
+    if (-not $LogCopied) {
+        Write-Warning "Log file not found in any expected location: $LogFile"
+        # Check what log files are actually available
+        $LogDirs = @(
+            Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs",
+            Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame",
+            Join-Path $ProjectDir "TrainingBuild\Windows",
+            $ProjectDir
+        )
+        
+        foreach ($LogDir in $LogDirs) {
+            if (Test-Path $LogDir) {
+                $AvailableLogs = Get-ChildItem $LogDir -Filter "*.log" -ErrorAction SilentlyContinue
+                if ($AvailableLogs) {
+                    Write-Host "Available log files in $LogDir:" -ForegroundColor Yellow
+                    $AvailableLogs | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
+                }
+            }
+        }
     }
     
     # Copy TensorBoard runs
@@ -253,7 +283,11 @@ function Copy-TrainingResults {
             $TensorBoardDest = Join-Path $TensorBoardDir "${RunName}_seed_$Seed"
             Copy-Item $LatestRun.FullName $TensorBoardDest -Recurse -Force
             Write-Host "Copied TensorBoard run: $($LatestRun.Name) -> ${RunName}_seed_$Seed" -ForegroundColor Green
+        } else {
+            Write-Warning "No TensorBoard runs found in: $TensorBoardSource"
         }
+    } else {
+        Write-Warning "TensorBoard source directory not found: $TensorBoardSource"
     }
     
     # Copy neural network files
@@ -262,6 +296,8 @@ function Copy-TrainingResults {
         $NeuralNetDest = Join-Path $NeuralNetworksDir "${RunName}_seed_$Seed"
         Copy-Item $NeuralNetSource $NeuralNetDest -Recurse -Force
         Write-Host "Copied neural network files: Training0 -> ${RunName}_seed_$Seed" -ForegroundColor Green
+    } else {
+        Write-Warning "Neural network source directory not found: $NeuralNetSource"
     }
     
     Write-Host ""
