@@ -91,7 +91,7 @@ $UATArgs = @(
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Packaging completed successfully!" -ForegroundColor Green
     Write-Host "Packaged game location: $PackageFolder" -ForegroundColor Cyan
-    
+
     # Try to find the executable
     $ExeFiles = Get-ChildItem -Path $PackageFolder -Filter "*.exe" -Recurse
     if ($ExeFiles.Count -gt 0) {

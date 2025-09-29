@@ -1,12 +1,13 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "FPSGameMode.h"
-#include "FPSHUD.h"
+
 #include "FPSCharacter.h"
-#include "UObject/ConstructorHelpers.h"
-#include "Kismet/GameplayStatics.h"
 #include "FPSGameState.h"
+#include "FPSHUD.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
 
 AFPSGameMode::AFPSGameMode()
 {
@@ -43,8 +44,11 @@ void AFPSGameMode::CompleteMission(APawn* InstigatorPawn, bool bMissionSuccess)
 				}
 			}
 		}
-		else {
-			UE_LOG(LogTemp, Warning, TEXT("SpectatingViewpointClass is nullptr, update GameMode class with valid subclass. Cannot change spectating view target."))
+		else
+		{
+			UE_LOG(LogTemp, Warning,
+			       TEXT("SpectatingViewpointClass is nullptr, update GameMode class with valid subclass. Cannot change "
+			            "spectating view target."))
 		}
 	}
 

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "FPSLauchPad.generated.h"
+#include "GameFramework/Actor.h"
 
 class UBoxComponent;
 
@@ -13,12 +13,11 @@ class FPSGAME_API AFPSLauchPad : public AActor
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	// Sets default values for this actor's properties
 	AFPSLauchPad();
 
-protected:
-
+  protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UBoxComponent* OverlapComp;
 
@@ -32,7 +31,8 @@ protected:
 	UStaticMeshComponent* MeshComp;
 
 	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	                    int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	void PlayEffects();
 
@@ -42,6 +42,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Launchpad")
 	float LaunchPitchAngle;
 
-private:
+  private:
 	static const float LAUCH_PAD_SIZE;
 };

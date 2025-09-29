@@ -1,17 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "FPSAIGuard.h"
-#include "Perception/PawnSensingComponent.h"
+
+#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "DrawDebugHelpers.h"
 #include "FPSGameMode.h"
-#include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "Perception/PawnSensingComponent.h"
 
 // Sets default values
 AFPSAIGuard::AFPSAIGuard()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need
+	// it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComp"));
@@ -20,7 +21,6 @@ AFPSAIGuard::AFPSAIGuard()
 	PawnSensingComp->OnHearNoise.AddDynamic(this, &AFPSAIGuard::OnNoiseHeard);
 
 	GuardState = EAIState::Idle;
-
 }
 
 // Called when the game starts or when spawned
@@ -87,7 +87,6 @@ void AFPSAIGuard::OnNoiseHeard(APawn* NoiseInstigator, const FVector& Location, 
 	{
 		MyController->StopMovement();
 	}
-
 }
 
 void AFPSAIGuard::ResetOrientation()
@@ -150,10 +149,9 @@ void AFPSAIGuard::Tick(float DeltaTime)
 			MoveToNextPatrolPoint();
 		}
 	}
-
 }
 
-void AFPSAIGuard::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+void AFPSAIGuard::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 

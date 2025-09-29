@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "FPSPlayerController.h"
-#include "FPSSpectatorCamera.h"
-#include "Engine/World.h"
+
 #include "Components/InputComponent.h"
+#include "Engine/World.h"
+#include "FPSSpectatorCamera.h"
 #include "GameFramework/Pawn.h"
 
 AFPSPlayerController::AFPSPlayerController()
@@ -25,9 +26,9 @@ void AFPSPlayerController::BeginPlay()
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
 		SpawnParams.Instigator = GetInstigator();
-		
+
 		SpectatorCamera = GetWorld()->SpawnActor<AFPSSpectatorCamera>(SpectatorCameraClass, SpawnParams);
-		
+
 		if (SpectatorCamera)
 		{
 			UE_LOG(LogTemp, Log, TEXT("Spectator camera created successfully"));
@@ -75,17 +76,17 @@ void AFPSPlayerController::EnterSpectatorMode()
 
 	// Store current pawn reference
 	OriginalPawn = GetPawn();
-	
+
 	if (OriginalPawn)
 	{
 		// Disable input on the original pawn
 		OriginalPawn->DisableInput(this);
-		
+
 		// Set view target to spectator camera
 		SetViewTargetWithBlend(SpectatorCamera, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
-		
+
 		bIsSpectating = true;
-		
+
 		UE_LOG(LogTemp, Log, TEXT("Entered spectator mode"));
 	}
 }
@@ -99,12 +100,12 @@ void AFPSPlayerController::ExitSpectatorMode()
 
 	// Re-enable input on the original pawn
 	OriginalPawn->EnableInput(this);
-	
+
 	// Set view target back to original pawn
 	SetViewTargetWithBlend(OriginalPawn, 0.5f, EViewTargetBlendFunction::VTBlend_Cubic);
-	
+
 	bIsSpectating = false;
-	
+
 	UE_LOG(LogTemp, Log, TEXT("Exited spectator mode"));
 }
 
@@ -147,4 +148,3 @@ void AFPSPlayerController::SpectatorLookUp(float Value)
 		SpectatorCamera->LookUp(Value);
 	}
 }
-

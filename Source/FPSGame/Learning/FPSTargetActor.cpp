@@ -1,6 +1,7 @@
 // Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 
 #include "FPSTargetActor.h"
+
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 
@@ -21,7 +22,7 @@ AFPSTargetActor::AFPSTargetActor()
 
 	// Set default material color to red for visibility
 	MeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
+
 	// Set default scale
 	SetActorScale3D(FVector(0.5f, 0.5f, 0.5f));
 }
@@ -29,7 +30,7 @@ AFPSTargetActor::AFPSTargetActor()
 void AFPSTargetActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	UE_LOG(LogTemp, Log, TEXT("FPSTargetActor spawned at location: %s"), *GetActorLocation().ToString());
 }
 
@@ -44,14 +45,12 @@ void AFPSTargetActor::Tick(float DeltaTime)
 void AFPSTargetActor::ResetToRandomLocation(FVector Center, FVector Bounds)
 {
 	// Generate random location within bounds
-	FVector RandomLocation = Center + FVector(
-		FMath::RandRange(-Bounds.X, Bounds.X),
-		FMath::RandRange(-Bounds.Y, Bounds.Y),
-		FMath::RandRange(-Bounds.Z, Bounds.Z)
-	);
+	FVector RandomLocation =
+	    Center + FVector(FMath::RandRange(-Bounds.X, Bounds.X), FMath::RandRange(-Bounds.Y, Bounds.Y),
+	                     FMath::RandRange(-Bounds.Z, Bounds.Z));
 
 	SetActorLocation(RandomLocation);
-	
+
 	UE_LOG(LogTemp, Log, TEXT("FPSTargetActor reset to location: %s"), *RandomLocation.ToString());
 }
 
@@ -59,4 +58,4 @@ bool AFPSTargetActor::IsLocationWithinReach(FVector Location, float Distance) co
 {
 	float ActualDistance = FVector::Dist(GetActorLocation(), Location);
 	return ActualDistance <= (Distance > 0 ? Distance : ReachDistance);
-} 
+}

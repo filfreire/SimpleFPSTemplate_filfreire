@@ -6,13 +6,13 @@ $pythonPath = "Intermediate\PipInstall\Scripts\python.exe"
 # Check if the Python executable exists
 if (Test-Path $pythonPath) {
     Write-Host "Found Python executable at: $pythonPath" -ForegroundColor Green
-    
+
     # Install TensorBoard using the found Python executable
     Write-Host "Installing TensorBoard..." -ForegroundColor Yellow
-    
+
     try {
         & $pythonPath -m pip install tensorboard
-        
+
         if ($LASTEXITCODE -eq 0) {
             Write-Host "TensorBoard installed successfully!" -ForegroundColor Green
         } else {

@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LearningAgentsTrainingEnvironment.h"
-#include "Learning/ObstacleTypes.h"
 #include "FPSCharacterTrainingEnvironment.generated.h"
+#include "Learning/ObstacleTypes.h"
+#include "LearningAgentsTrainingEnvironment.h"
 
 class AFPSTargetActor;
 class UFPSObstacleManager;
@@ -18,11 +18,12 @@ class FPSGAME_API UFPSCharacterTrainingEnvironment : public ULearningAgentsTrain
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	UFPSCharacterTrainingEnvironment();
 
 	virtual void GatherAgentReward_Implementation(float& OutReward, const int32 AgentId) override;
-	virtual void GatherAgentCompletion_Implementation(ELearningAgentsCompletion& OutCompletion, const int32 AgentId) override;
+	virtual void GatherAgentCompletion_Implementation(ELearningAgentsCompletion& OutCompletion,
+	                                                  const int32 AgentId) override;
 	virtual void ResetAgentEpisode_Implementation(const int32 AgentId) override;
 
 	// Target actor reference
@@ -86,8 +87,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Obstacles")
 	void ConfigureObstacles(bool bUse, int32 MaxObs, float MinSize, float MaxSize, EObstacleMode Mode);
 
-private:
+  private:
 	// Store previous distances for reward calculation
 	TMap<int32, float> PreviousDistances;
 	TMap<int32, int32> EpisodeSteps;
-}; 
+};

@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "LearningAgentsPolicy.h"
-#include "LearningAgentsCritic.h"
-#include "LearningAgentsTrainer.h"
-#include "LearningAgentsPPOTrainer.h"
-#include "LearningAgentsManager.h"
-#include "LearningAgentsCommunicator.h"
-#include "Learning/ObstacleTypes.h"
 #include "FPSCharacterManager.generated.h"
+#include "GameFramework/Actor.h"
+#include "Learning/ObstacleTypes.h"
+#include "LearningAgentsCommunicator.h"
+#include "LearningAgentsCritic.h"
+#include "LearningAgentsManager.h"
+#include "LearningAgentsPPOTrainer.h"
+#include "LearningAgentsPolicy.h"
+#include "LearningAgentsTrainer.h"
 
 class UFPSCharacterManagerComponent;
 class UFPSCharacterInteractor;
@@ -20,15 +20,13 @@ class AFPSTargetActor;
 class ULearningAgentsNeuralNetwork;
 class UFPSObstacleManager;
 
-
 UENUM(BlueprintType)
 enum class EFPSCharacterManagerMode : uint8
 {
-	Training		UMETA(DisplayName = "Training"),
-	Inference		UMETA(DisplayName = "Inference"),
-	ReInitialize	UMETA(DisplayName = "ReInitialize")
+	Training UMETA(DisplayName = "Training"),
+	Inference UMETA(DisplayName = "Inference"),
+	ReInitialize UMETA(DisplayName = "ReInitialize")
 };
-
 
 USTRUCT(BlueprintType)
 struct FObstacleConfiguration
@@ -58,11 +56,11 @@ UCLASS()
 class FPSGAME_API AFPSCharacterManager : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+  public:
 	AFPSCharacterManager();
 
-protected:
+  protected:
 	virtual void BeginPlay() override;
 
 	// Core learning components
@@ -94,7 +92,7 @@ protected:
 	void InitializeAgents();
 	void InitializeManager();
 
-public:	
+  public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Manager settings
@@ -103,7 +101,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Manager Settings")
 	int32 RandomSeed = 1234;
-
 
 	// Learning settings
 	UPROPERTY(EditAnywhere, Category = "Learning Settings")
@@ -127,7 +124,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Neural Networks")
 	ULearningAgentsNeuralNetwork* DecoderNeuralNetwork;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Neural Networks")
 	ULearningAgentsNeuralNetwork* CriticNeuralNetwork;
 
@@ -148,4 +145,4 @@ public:
 	// Obstacle configuration
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacles")
 	FObstacleConfiguration ObstacleConfig;
-}; 
+};

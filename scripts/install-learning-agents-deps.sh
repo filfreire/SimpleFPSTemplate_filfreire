@@ -114,11 +114,10 @@ echo -e "${GRAY}This will install Python dependencies exactly like the Editor GU
 
 # Run UBT with PipInstall mode
 echo -e "${GRAY}Executing: $RUN_UBT_SCRIPT FPSGameEditor Linux Development -Project=\"$PROJECT_FILE\" -Mode=PipInstall${NC}"
-"$RUN_UBT_SCRIPT" FPSGameEditor Linux Development -Project="$PROJECT_FILE" -Mode=PipInstall
 
-if [ $? -eq 0 ]; then
+if "$RUN_UBT_SCRIPT" FPSGameEditor Linux Development -Project="$PROJECT_FILE" -Mode=PipInstall; then
     echo -e "${GREEN}✓ PipInstall completed successfully!${NC}"
-    
+
     # Verify installation
     PYTHON_EXE="$PIP_INSTALL_PATH/bin/python"
     if [ -f "$PYTHON_EXE" ]; then

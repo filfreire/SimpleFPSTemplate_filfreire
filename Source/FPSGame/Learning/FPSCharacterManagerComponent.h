@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "LearningAgentsManager.h"
 #include "FPSCharacterManagerComponent.generated.h"
+#include "LearningAgentsManager.h"
 
 /**
  * Manager component for FPSCharacter learning agents
@@ -14,9 +14,9 @@ class FPSGAME_API UFPSCharacterManagerComponent : public ULearningAgentsManager
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	UFPSCharacterManagerComponent();
 
-protected:
+  protected:
 	virtual void PostInitProperties() override;
-}; 
+};

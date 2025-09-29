@@ -155,4 +155,3 @@ Run the example script to see different obstacle configurations:
 5. The system will automatically handle obstacle management during training
 
 **Note**: Command-line parameters override Blueprint settings when running headless training.
-

@@ -63,33 +63,32 @@ cd "$PROJECT_PATH" || exit 1
 # Check if the Python executable exists
 if [ -f "$PYTHON_PATH" ]; then
     echo -e "${GREEN}Found Python executable at: $PYTHON_PATH${NC}"
-    
+
     # Check if the log directory exists
     if [ -d "$LOG_DIR" ]; then
         echo -e "${GREEN}Found TensorBoard logs at: $LOG_DIR${NC}"
-        
+
         # Run TensorBoard using the found Python executable
         echo -e "${YELLOW}Starting TensorBoard for FPSGame...${NC}"
         echo -e "${CYAN}TensorBoard will be available at:${NC}"
         echo -e "${CYAN}  - Locally: http://localhost:$PORT${NC}"
         echo -e "${CYAN}  - Network: http://$(hostname -I | awk '{print $1}'):$PORT${NC}"
         echo -e "${YELLOW}Press Ctrl+C to stop TensorBoard${NC}"
-        
+
         # Check if tensorboard is available
         if "$PYTHON_PATH" -c "import tensorboard" 2>/dev/null; then
             echo -e "${GREEN}TensorBoard is available${NC}"
         else
             echo -e "${YELLOW}TensorBoard not found in Python environment. Installing...${NC}"
-            "$PYTHON_PATH" -m pip install tensorboard
-            if [ $? -ne 0 ]; then
+            if ! "$PYTHON_PATH" -m pip install tensorboard; then
                 echo -e "${RED}Failed to install TensorBoard${NC}"
                 exit 1
             fi
         fi
-        
+
         # Start TensorBoard
         "$PYTHON_PATH" -m tensorboard.main --logdir="$LOG_DIR" --port="$PORT" --host="$HOST"
-        
+
     else
         echo -e "${RED}TensorBoard log directory not found at: $LOG_DIR${NC}"
         echo -e "${YELLOW}Make sure you have run Learning Agents training to generate logs.${NC}"
@@ -105,4 +104,3 @@ else
 fi
 
 # TensorBoard started successfully
-

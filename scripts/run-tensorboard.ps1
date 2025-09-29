@@ -9,18 +9,18 @@ $logDir = "Intermediate\LearningAgents\TensorBoard\runs"
 # Check if the Python executable exists
 if (Test-Path $pythonPath) {
     Write-Host "Found Python executable at: $pythonPath" -ForegroundColor Green
-    
+
     # Check if the log directory exists
     if (Test-Path $logDir) {
         Write-Host "Found TensorBoard logs at: $logDir" -ForegroundColor Green
-        
+
         # Run TensorBoard using the found Python executable
         Write-Host "Starting TensorBoard for FPSGame..." -ForegroundColor Yellow
         Write-Host "TensorBoard will be available at:" -ForegroundColor Cyan
         Write-Host "  - Locally: http://localhost:6006" -ForegroundColor Cyan
         Write-Host "  - Network: http://${env:COMPUTERNAME}.local:6006" -ForegroundColor Cyan
         Write-Host "Press Ctrl+C to stop TensorBoard" -ForegroundColor Yellow
-        
+
         try {
             $tensorboardPath = Join-Path (Split-Path $pythonPath -Parent) "tensorboard.exe"
             & $tensorboardPath --logdir=$logDir --port=6006 --host=0.0.0.0
@@ -41,4 +41,3 @@ if (Test-Path $pythonPath) {
 }
 
 # TensorBoard started successfully
-

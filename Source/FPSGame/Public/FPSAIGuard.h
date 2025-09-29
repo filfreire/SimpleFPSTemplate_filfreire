@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "FPSAIGuard.generated.h"
+#include "GameFramework/Character.h"
 
 class UPawnSensingComponent;
 
@@ -21,11 +21,11 @@ class FPSGAME_API AFPSAIGuard : public ACharacter
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	// Sets default values for this character's properties
 	AFPSAIGuard();
 
-protected:
+  protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -68,8 +68,7 @@ protected:
 
 	void MoveToNextPatrolPoint();
 
-public:
+  public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 };

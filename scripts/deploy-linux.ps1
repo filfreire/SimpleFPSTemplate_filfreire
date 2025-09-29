@@ -62,7 +62,7 @@ Write-Host "Starting deployment..." -ForegroundColor Yellow
 
 try {
     Invoke-Expression $DeployCommand
-    
+
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Deployment completed successfully!" -ForegroundColor Green
         Write-Host "Follow the Linux server setup instructions above to run the game" -ForegroundColor Cyan
@@ -74,7 +74,3 @@ try {
     Write-Error "Error occurred during deployment: $($_.Exception.Message)"
     exit 1
 }
-
-
-
-

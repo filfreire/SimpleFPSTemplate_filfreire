@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 #include "FPSObjectiveActor.generated.h"
+#include "GameFramework/Actor.h"
 
 class USphereComponent;
 
@@ -13,12 +13,11 @@ class FPSGAME_API AFPSObjectiveActor : public AActor
 {
 	GENERATED_BODY()
 
-public:
+  public:
 	// Sets default values for this actor's properties
 	AFPSObjectiveActor();
 
-protected:
-
+  protected:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UStaticMeshComponent* MeshComp;
 
@@ -33,8 +32,6 @@ protected:
 
 	void PlayEffects();
 
-public:
-
+  public:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-
 };

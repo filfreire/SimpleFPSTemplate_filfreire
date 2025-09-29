@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "FPSLauchPad.h"
+
 #include "Components/BoxComponent.h"
 #include "Components/DecalComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "FPSCharacter.h"
+#include "Kismet/GameplayStatics.h"
 
 const float AFPSLauchPad::LAUCH_PAD_SIZE = 50.0f;
 
@@ -36,16 +36,15 @@ AFPSLauchPad::AFPSLauchPad()
 
 	LaunchStrength = 1500.0f;
 	LaunchPitchAngle = 35.0f;
-
 }
 
-void AFPSLauchPad::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AFPSLauchPad::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
+                                  const FHitResult& SweepResult)
 {
-
 	FRotator LaunchDirection = GetActorRotation();
 	LaunchDirection.Pitch += LaunchPitchAngle;
 	FVector LaunchVelocity = LaunchDirection.Vector() * LaunchStrength;
-
 
 	// TODO - fixme - this part doesn't seem to be working
 	if (OtherComp && OtherComp->IsSimulatingPhysics())
@@ -58,7 +57,6 @@ void AFPSLauchPad::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* O
 
 	if (MyPawn == nullptr)
 	{
-
 		return;
 	}
 	else
@@ -66,7 +64,6 @@ void AFPSLauchPad::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* O
 		MyPawn->LaunchCharacter(LaunchVelocity, true, true);
 		PlayEffects();
 	}
-
 }
 
 void AFPSLauchPad::PlayEffects()

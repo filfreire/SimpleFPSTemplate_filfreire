@@ -28,18 +28,18 @@ if ([string]::IsNullOrEmpty($UnrealPath)) {
 # Helper function to calculate relative path (compatible with older PowerShell versions)
 function Get-RelativePath {
     param([string]$FromPath, [string]$ToPath)
-    
+
     $FromPathNormalized = (Resolve-Path $FromPath).Path.TrimEnd('\')
     $ToPathNormalized = (Resolve-Path $ToPath).Path.TrimEnd('\')
-    
+
     # Split paths into components
     $FromParts = $FromPathNormalized.Split('\')
     $ToParts = $ToPathNormalized.Split('\')
-    
+
     # Find common root
     $CommonLength = 0
     $MinLength = [Math]::Min($FromParts.Length, $ToParts.Length)
-    
+
     for ($i = 0; $i -lt $MinLength; $i++) {
         if ($FromParts[$i] -eq $ToParts[$i]) {
             $CommonLength++
@@ -47,21 +47,21 @@ function Get-RelativePath {
             break
         }
     }
-    
+
     # Calculate relative path
     $UpLevels = $FromParts.Length - $CommonLength
     $RelativeParts = @()
-    
+
     # Add ".." for each level up
     for ($i = 0; $i -lt $UpLevels; $i++) {
         $RelativeParts += ".."
     }
-    
+
     # Add remaining path components
     for ($i = $CommonLength; $i -lt $ToParts.Length; $i++) {
         $RelativeParts += $ToParts[$i]
     }
-    
+
     $RelativePath = $RelativeParts -join '/'
     return $RelativePath
 }
@@ -129,4 +129,3 @@ Write-Host "5. Save the blueprint and start headless training" -ForegroundColor 
 Write-Host "`n======================================" -ForegroundColor Cyan
 Write-Host "READY FOR HEADLESS TRAINING!" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
-
