@@ -40,20 +40,31 @@ function Invoke-TrainingRun {
     }
     Write-Host ""
     
-    # Build the command
+    # Build the command arguments as a string
     $cmdArgs = @()
     foreach ($key in $Parameters.Keys) {
-        $cmdArgs += "-$key"
-        $cmdArgs += $Parameters[$key]
+        # Ensure RandomSeed is passed as integer to avoid type conversion issues
+        if ($key -eq "RandomSeed") {
+            $cmdArgs += "-$key $([int]$Parameters[$key])"
+        } else {
+            # Convert decimal separator from comma to dot for proper PowerShell parsing
+            $value = $Parameters[$key].ToString()
+            if ($value -match '^\d+,\d+$') {
+                $value = $value -replace ',', '.'
+            }
+            $cmdArgs += "-$key $value"
+        }
     }
     
+    $commandString = ".\scripts\run-training-headless.ps1 " + ($cmdArgs -join ' ')
+    
     Write-Host "Executing training run..." -ForegroundColor Green
-    Write-Host "Command: .\scripts\run-training-headless.ps1 $($cmdArgs -join ' ')" -ForegroundColor Gray
+    Write-Host "Command: $commandString" -ForegroundColor Gray
     Write-Host ""
     
     try {
-        # Execute the training script
-        & ".\scripts\run-training-headless.ps1" @cmdArgs
+        # Execute the training script using Invoke-Expression to properly parse the command
+        Invoke-Expression $commandString
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Run $RunName completed successfully!" -ForegroundColor Green
@@ -72,7 +83,7 @@ function Invoke-TrainingRun {
 
 # Define the three training configurations
 $ConservativeParams = @{
-    TimeoutMinutes = 30
+    TimeoutMinutes = 5
     RandomSeed = 1001
     LearningRatePolicy = 0.00005
     LearningRateCritic = 0.0005
@@ -86,7 +97,7 @@ $ConservativeParams = @{
 }
 
 $AggressiveParams = @{
-    TimeoutMinutes = 30
+    TimeoutMinutes = 5
     RandomSeed = 2002
     LearningRatePolicy = 0.0003
     LearningRateCritic = 0.003
@@ -100,7 +111,7 @@ $AggressiveParams = @{
 }
 
 $BalancedParams = @{
-    TimeoutMinutes = 30
+    TimeoutMinutes = 5
     RandomSeed = 3003
     LearningRatePolicy = 0.0001
     LearningRateCritic = 0.001
