@@ -6,7 +6,8 @@ param(
     [switch]$SkipConservative = $false,
     [switch]$SkipAggressive = $false,
     [switch]$SkipBalanced = $false,
-    [switch]$StopOnError = $false
+    [switch]$StopOnError = $false,
+    [string]$ResultsDir = "SpecialBatchResults"
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
@@ -19,6 +20,33 @@ $ProjectDir = Split-Path -Parent $PSScriptRoot
 Set-Location $ProjectDir
 
 Write-Host "Project Directory: $ProjectDir" -ForegroundColor Yellow
+Write-Host "Results Directory: $ResultsDir" -ForegroundColor Yellow
+Write-Host ""
+
+# Create results directory
+$ResultsPath = Join-Path $ProjectDir $ResultsDir
+if (-not (Test-Path $ResultsPath)) {
+    New-Item -ItemType Directory -Path $ResultsPath -Force | Out-Null
+    Write-Host "Created results directory: $ResultsPath" -ForegroundColor Green
+}
+
+# Create subdirectories for organized results
+$LogsDir = Join-Path $ResultsPath "Logs"
+$TensorBoardDir = Join-Path $ResultsPath "TensorBoard"
+$NeuralNetworksDir = Join-Path $ResultsPath "NeuralNetworks"
+$SummaryDir = Join-Path $ResultsPath "Summary"
+
+@($LogsDir, $TensorBoardDir, $NeuralNetworksDir, $SummaryDir) | ForEach-Object {
+    if (-not (Test-Path $_)) {
+        New-Item -ItemType Directory -Path $_ -Force | Out-Null
+    }
+}
+
+Write-Host "Results will be organized in:" -ForegroundColor Cyan
+Write-Host "  - Logs: $LogsDir" -ForegroundColor White
+Write-Host "  - TensorBoard: $TensorBoardDir" -ForegroundColor White
+Write-Host "  - Neural Networks: $NeuralNetworksDir" -ForegroundColor White
+Write-Host "  - Summary: $SummaryDir" -ForegroundColor White
 Write-Host ""
 
 # Function to run a training configuration
@@ -40,6 +68,9 @@ function Invoke-TrainingRun {
     }
     Write-Host ""
     
+    # Create unique log file name
+    $LogFile = "special_${RunName}_seed_$($Parameters.RandomSeed).log"
+    
     # Build the command arguments as a string
     $cmdArgs = @()
     foreach ($key in $Parameters.Keys) {
@@ -56,9 +87,13 @@ function Invoke-TrainingRun {
         }
     }
     
+    # Add log file parameter
+    $cmdArgs += "-LogFile $LogFile"
+    
     $commandString = ".\scripts\run-training-headless.ps1 " + ($cmdArgs -join ' ')
     
     Write-Host "Executing training run..." -ForegroundColor Green
+    Write-Host "Log file: $LogFile" -ForegroundColor Cyan
     Write-Host "Command: $commandString" -ForegroundColor Gray
     Write-Host ""
     
@@ -66,8 +101,16 @@ function Invoke-TrainingRun {
         # Execute the training script using Invoke-Expression to properly parse the command
         Invoke-Expression $commandString
         
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Run $RunName completed successfully!" -ForegroundColor Green
+        # Check exit code - treat timeout (-1) as successful
+        if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1) {
+            if ($LASTEXITCODE -eq -1) {
+                Write-Host "Run $RunName completed with timeout (this is expected for testing)" -ForegroundColor Yellow
+            } else {
+                Write-Host "Run $RunName completed successfully!" -ForegroundColor Green
+            }
+            
+            # Copy results
+            Copy-TrainingResults -RunName $RunName -LogFile $LogFile -Seed $Parameters.RandomSeed
             return $true
         } else {
             Write-Host "Run $RunName failed with exit code: $LASTEXITCODE" -ForegroundColor Red
@@ -76,6 +119,49 @@ function Invoke-TrainingRun {
     } catch {
         Write-Host "Run $RunName failed with error: $($_.Exception.Message)" -ForegroundColor Red
         return $false
+    }
+    
+    Write-Host ""
+}
+
+# Function to copy training results
+function Copy-TrainingResults {
+    param(
+        [string]$RunName,
+        [string]$LogFile,
+        [int]$Seed
+    )
+    
+    Write-Host "Copying results for $RunName run..." -ForegroundColor Cyan
+    
+    # Copy log file
+    $SourceLog = Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs") $LogFile
+    $DestLog = Join-Path $LogsDir $LogFile
+    
+    if (Test-Path $SourceLog) {
+        Copy-Item $SourceLog $DestLog -Force
+        Write-Host "Copied log file: $SourceLog -> $DestLog" -ForegroundColor Green
+    } else {
+        Write-Warning "Log file not found: $SourceLog"
+    }
+    
+    # Copy TensorBoard runs
+    $TensorBoardSource = Join-Path $ProjectDir "Intermediate\LearningAgents\TensorBoard\runs"
+    if (Test-Path $TensorBoardSource) {
+        $LatestRun = Get-ChildItem $TensorBoardSource | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+        if ($LatestRun) {
+            $TensorBoardDest = Join-Path $TensorBoardDir "${RunName}_seed_$Seed"
+            Copy-Item $LatestRun.FullName $TensorBoardDest -Recurse -Force
+            Write-Host "Copied TensorBoard run: $($LatestRun.Name) -> ${RunName}_seed_$Seed" -ForegroundColor Green
+        }
+    }
+    
+    # Copy neural network files
+    $NeuralNetSource = Join-Path $ProjectDir "Intermediate\LearningAgents\Training0"
+    if (Test-Path $NeuralNetSource) {
+        $NeuralNetDest = Join-Path $NeuralNetworksDir "${RunName}_seed_$Seed"
+        Copy-Item $NeuralNetSource $NeuralNetDest -Recurse -Force
+        Write-Host "Copied neural network files: Training0 -> ${RunName}_seed_$Seed" -ForegroundColor Green
     }
     
     Write-Host ""
@@ -126,6 +212,7 @@ $BalancedParams = @{
 
 # Track results
 $Results = @{}
+$StartTime = Get-Date
 
 # Conservative: Low learning rate, small batches
 if (-not $SkipConservative) {
@@ -166,6 +253,52 @@ if (-not $SkipBalanced) {
     Write-Host ""
 }
 
+# Generate summary report
+$EndTime = Get-Date
+$TotalDuration = $EndTime - $StartTime
+
+$SummaryReport = @"
+COOPGAMEFLEEP SPECIAL BATCH TRAINING SUMMARY REPORT
+==================================================
+Start Time: $($StartTime.ToString("yyyy-MM-dd HH:mm:ss"))
+End Time: $($EndTime.ToString("yyyy-MM-dd HH:mm:ss"))
+Total Duration: $($TotalDuration.ToString("hh\:mm\:ss"))
+
+CONFIGURATION:
+- Conservative: Low learning rate, small batches (5 min timeout)
+- Aggressive: High learning rate, large batches (5 min timeout)  
+- Balanced: Medium learning rate, moderate batches (5 min timeout)
+
+RESULTS:
+- Successful runs: $($Results.Values | Where-Object { $_ -eq $true }).Count
+- Failed runs: $($Results.Values | Where-Object { $_ -eq $false }).Count
+
+DETAILED RESULTS:
+"@
+
+foreach ($run in $Results.Keys) {
+    $status = if ($Results[$run]) { "SUCCESS" } else { "FAILED" }
+    $SummaryReport += "`n- $run`: $status"
+}
+
+$SummaryReport += @"
+
+FILES GENERATED:
+- Log files: $LogsDir
+- TensorBoard runs: $TensorBoardDir
+- Neural network files: $NeuralNetworksDir
+- This summary: $SummaryDir
+
+NEXT STEPS:
+1. Review individual log files for detailed training progress
+2. Use TensorBoard to visualize training metrics: .\scripts\run-tensorboard.ps1 --log-dir "$TensorBoardDir"
+3. Compare neural network performance across different configurations
+4. Analyze results to determine optimal hyperparameters
+"@
+
+$SummaryFile = Join-Path $SummaryDir "special_batch_training_summary_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').txt"
+$SummaryReport | Out-File -FilePath $SummaryFile -Encoding UTF8
+
 # Summary
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "BATCH TRAINING SUMMARY" -ForegroundColor Yellow
@@ -186,14 +319,20 @@ foreach ($run in $Results.Keys) {
 
 Write-Host ""
 Write-Host "Completed: $SuccessCount/$TotalCount runs successful" -ForegroundColor $(if ($SuccessCount -eq $TotalCount) { "Green" } else { "Yellow" })
+Write-Host "Total Duration: $($TotalDuration.ToString("hh\:mm\:ss"))" -ForegroundColor Yellow
+
+Write-Host ""
+Write-Host "Results saved to: $ResultsPath" -ForegroundColor Cyan
+Write-Host "Summary report: $SummaryFile" -ForegroundColor Cyan
 
 Write-Host ""
 Write-Host "Check the following for results:" -ForegroundColor White
-Write-Host "  - Log files in TrainingBuild directory" -ForegroundColor Cyan
-Write-Host "  - TensorBoard logs: Intermediate\LearningAgents\TensorBoard\runs" -ForegroundColor Cyan
-Write-Host "  - Neural network snapshots in Intermediate directory" -ForegroundColor Cyan
+Write-Host "  - Log files: $LogsDir" -ForegroundColor Cyan
+Write-Host "  - TensorBoard logs: $TensorBoardDir" -ForegroundColor Cyan
+Write-Host "  - Neural network files: $NeuralNetworksDir" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "To view TensorBoard, run: .\scripts\run-tensorboard.ps1" -ForegroundColor Green
+Write-Host "To view TensorBoard for all runs:" -ForegroundColor Green
+Write-Host ".\scripts\run-tensorboard.ps1 --log-dir `"$TensorBoardDir`"" -ForegroundColor White
 
 # Exit with appropriate code
 if ($SuccessCount -eq $TotalCount) {
