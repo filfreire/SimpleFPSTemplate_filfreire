@@ -4,8 +4,6 @@
 
 Simple C++ FPS Template for Unreal Engine 4. This fork is my personal repo with exercises, experiments and classwork (for <https://www.udemy.com/course/unrealengine-cpp>) and is adapted from <https://github.com/tomlooman/SimpleFPSTemplate>.
 
-> Note repository is in a WIP state.
-
 > Note: this repository is in a WIP state.
 
 ## Prerequisites
