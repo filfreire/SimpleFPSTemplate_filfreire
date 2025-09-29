@@ -1,4 +1,4 @@
-# Batch Training Runner for CoopGameFleep
+# Batch Training Runner for simplefpstemplate_filfreire
 # This script runs multiple training configurations sequentially
 # Usage: .\scripts\run-batch-special.ps1
 
@@ -11,7 +11,7 @@ param(
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "COOPGAMEFLEEP BATCH TRAINING RUNNER" -ForegroundColor Green
+Write-Host "simplefpstemplate_filfreire BATCH TRAINING RUNNER" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -169,7 +169,7 @@ function Copy-TrainingResults {
 
 # Define the three training configurations
 $ConservativeParams = @{
-    TimeoutMinutes = 5
+    TimeoutMinutes = 35
     RandomSeed = 1001
     LearningRatePolicy = 0.00005
     LearningRateCritic = 0.0005
@@ -183,7 +183,7 @@ $ConservativeParams = @{
 }
 
 $AggressiveParams = @{
-    TimeoutMinutes = 5
+    TimeoutMinutes = 35
     RandomSeed = 2002
     LearningRatePolicy = 0.0003
     LearningRateCritic = 0.003
@@ -197,7 +197,7 @@ $AggressiveParams = @{
 }
 
 $BalancedParams = @{
-    TimeoutMinutes = 5
+    TimeoutMinutes = 35
     RandomSeed = 3003
     LearningRatePolicy = 0.0001
     LearningRateCritic = 0.001
@@ -258,7 +258,7 @@ $EndTime = Get-Date
 $TotalDuration = $EndTime - $StartTime
 
 $SummaryReport = @"
-COOPGAMEFLEEP SPECIAL BATCH TRAINING SUMMARY REPORT
+simplefpstemplate_filfreire SPECIAL BATCH TRAINING SUMMARY REPORT
 ==================================================
 Start Time: $($StartTime.ToString("yyyy-MM-dd HH:mm:ss"))
 End Time: $($EndTime.ToString("yyyy-MM-dd HH:mm:ss"))
