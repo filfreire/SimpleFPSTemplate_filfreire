@@ -49,6 +49,106 @@ Write-Host "  - Neural Networks: $NeuralNetworksDir" -ForegroundColor White
 Write-Host "  - Summary: $SummaryDir" -ForegroundColor White
 Write-Host ""
 
+# Function to clean up orphaned training processes
+function Stop-OrphanedTrainingProcesses {
+    Write-Host "======================================" -ForegroundColor Cyan
+    Write-Host "CHECKING FOR ORPHANED TRAINING PROCESSES" -ForegroundColor Yellow
+    Write-Host "======================================" -ForegroundColor Cyan
+    
+    # Find and kill any running FPSGame processes
+    $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
+    if ($GameProcesses) {
+        Write-Host "Found $($GameProcesses.Count) orphaned FPSGame.exe process(es)" -ForegroundColor Yellow
+        foreach ($GameProc in $GameProcesses) {
+            Write-Host "Terminating orphaned FPSGame.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
+            
+            # Method 1: Use taskkill with /T flag to kill process tree
+            $taskkillResult = & taskkill /PID $GameProc.Id /T /F 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "taskkill /T /F succeeded for PID $($GameProc.Id)" -ForegroundColor Green
+            } else {
+                Write-Warning "taskkill /T /F failed for PID $($GameProc.Id): $taskkillResult"
+                
+                # Method 2: Fallback - try to kill child processes manually
+                Write-Host "Attempting manual child process termination..." -ForegroundColor Yellow
+                try {
+                    $childProcesses = Get-WmiObject Win32_Process | Where-Object { $_.ParentProcessId -eq $GameProc.Id }
+                    foreach ($child in $childProcesses) {
+                        Write-Host "Killing child process: $($child.ProcessName) (PID: $($child.ProcessId))" -ForegroundColor Gray
+                        & taskkill /PID $child.ProcessId /F 2>$null
+                    }
+                    
+                    # Now try to kill the main process again
+                    & taskkill /PID $GameProc.Id /F 2>$null
+                    Write-Host "Manual termination attempt completed for PID $($GameProc.Id)" -ForegroundColor Yellow
+                } catch {
+                    Write-Warning "Manual child process termination failed: $($_.Exception.Message)"
+                }
+            }
+        }
+        
+        # Give processes time to terminate
+        Start-Sleep -Seconds 3
+        
+        # Verify termination with multiple attempts
+        $maxVerificationAttempts = 3
+        $verificationAttempt = 0
+        $allProcessesTerminated = $false
+        
+        while ($verificationAttempt -lt $maxVerificationAttempts -and -not $allProcessesTerminated) {
+            $verificationAttempt++
+            Write-Host "Verification attempt $verificationAttempt/$maxVerificationAttempts..." -ForegroundColor Cyan
+            
+            $RemainingGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
+            if ($RemainingGameProcesses) {
+                Write-Warning "Warning: $($RemainingGameProcesses.Count) FPSGame.exe process(es) still running"
+                
+                # Try one more aggressive termination attempt
+                foreach ($remainingProc in $RemainingGameProcesses) {
+                    Write-Host "Force killing remaining process PID $($remainingProc.Id)..." -ForegroundColor Red
+                    try {
+                        # Try multiple termination methods
+                        & taskkill /PID $remainingProc.Id /F 2>$null
+                        Start-Sleep -Milliseconds 500
+                        
+                        # If still running, try PowerShell Stop-Process
+                        $stillRunning = Get-Process -Id $remainingProc.Id -ErrorAction SilentlyContinue
+                        if ($stillRunning) {
+                            Stop-Process -Id $remainingProc.Id -Force -ErrorAction Stop
+                        }
+                    } catch {
+                        Write-Warning "Failed to terminate remaining process PID $($remainingProc.Id): $($_.Exception.Message)"
+                    }
+                }
+                
+                Start-Sleep -Seconds 2
+            } else {
+                $allProcessesTerminated = $true
+                Write-Host "All FPSGame.exe processes successfully terminated" -ForegroundColor Green
+            }
+        }
+        
+        # Final verification
+        $FinalGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
+        if ($FinalGameProcesses) {
+            Write-Error "CRITICAL: $($FinalGameProcesses.Count) FPSGame.exe process(es) still running after all termination attempts!"
+            Write-Error "Manual intervention may be required to terminate these processes."
+            foreach ($proc in $FinalGameProcesses) {
+                Write-Error "  - PID: $($proc.Id), ProcessName: $($proc.ProcessName)"
+            }
+        } else {
+            Write-Host "SUCCESS: All FPSGame.exe processes confirmed terminated" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "No orphaned FPSGame.exe processes found" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+}
+
+# Clean up any orphaned processes before starting
+Stop-OrphanedTrainingProcesses
+
 # Function to run a training configuration
 function Invoke-TrainingRun {
     param(
