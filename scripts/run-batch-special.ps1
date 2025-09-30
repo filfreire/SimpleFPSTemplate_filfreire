@@ -268,7 +268,7 @@ function Copy-TrainingResults {
             if (Test-Path $LogDir) {
                 $AvailableLogs = Get-ChildItem $LogDir -Filter "*.log" -ErrorAction SilentlyContinue
                 if ($AvailableLogs) {
-                    Write-Host "Available log files in $LogDir:" -ForegroundColor Yellow
+                    Write-Host "Available log files in ${LogDir}:" -ForegroundColor Yellow
                     $AvailableLogs | ForEach-Object { Write-Host "  - $($_.Name)" -ForegroundColor Gray }
                 }
             }
