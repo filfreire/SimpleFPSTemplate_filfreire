@@ -1,6 +1,6 @@
-# Batch Training Runner for SimpleFPSTemplate_filfreire - 10 seeds Version
+# Batch Training Runner for SimpleFPSTemplate_filfreire - 30 Seeds Version
 # This script runs multiple training configurations with 30 random seeds each
-# All 10 seeds run in parallel for each flavor
+# All 30 seeds run in parallel for each flavor
 # Usage: .\scripts\run-batch-special-30seeds.ps1
 
 param(
@@ -8,11 +8,11 @@ param(
     [switch]$SkipAggressive = $false,
     [switch]$SkipModerate = $false,
     [switch]$StopOnError = $false,
-    [string]$ResultsDir = "SpecialBatchResults_10Seeds"
+    [string]$ResultsDir = "SpecialBatchResults_30Seeds"
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "SIMPLEFPSTEMPLATE_FILFREIRE BATCH TRAINING RUNNER - 10 seeds" -ForegroundColor Green
+Write-Host "SIMPLEFPSTEMPLATE_FILFREIRE BATCH TRAINING RUNNER - 30 SEEDS" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -318,7 +318,7 @@ function Invoke-TrainingBatch {
     }
     
     Write-Host "Started $($Jobs.Count) parallel training jobs. Waiting for completion..." -ForegroundColor Cyan
-    Write-Host "Training will run for 20 minutes per instance..." -ForegroundColor Yellow
+    Write-Host "Training will run for 30 minutes per instance..." -ForegroundColor Yellow
     Write-Host ""
     
     # Wait for all jobs to complete
@@ -419,7 +419,7 @@ Stop-OrphanedTrainingProcesses
 
 # Define the three training configurations
 $ConservativeParams = @{
-    TimeoutMinutes = 20
+    TimeoutMinutes = 30
     LearningRatePolicy = 0.00005
     LearningRateCritic = 0.0005
     EpsilonClip = 0.1
@@ -432,7 +432,7 @@ $ConservativeParams = @{
 }
 
 $AggressiveParams = @{
-    TimeoutMinutes = 20
+    TimeoutMinutes = 30
     LearningRatePolicy = 0.0003
     LearningRateCritic = 0.003
     EpsilonClip = 0.3
@@ -445,7 +445,7 @@ $AggressiveParams = @{
 }
 
 $ModerateParams = @{
-    TimeoutMinutes = 20
+    TimeoutMinutes = 30
     LearningRatePolicy = 0.0001
     LearningRateCritic = 0.001
     EpsilonClip = 0.2
@@ -461,8 +461,8 @@ $ModerateParams = @{
 $AllResults = @{}
 $StartTime = Get-Date
 
-$AllSeeds = 1..10
-# USING 1..10 for testing purposes; 
+# Define all seeds (1-30)
+$AllSeeds = 1..30
 
 # Conservative: Low learning rate, small batches
 if (-not $SkipConservative) {
@@ -471,8 +471,8 @@ if (-not $SkipConservative) {
     Write-Host "======================================" -ForegroundColor Green
     Write-Host ""
     
-    # Run all 10 seeds in parallel
-    Write-Host "Running Conservative (All 10 Seeds in Parallel)..." -ForegroundColor Yellow
+    # Run all 30 seeds in parallel
+    Write-Host "Running Conservative (All 30 Seeds in Parallel)..." -ForegroundColor Yellow
     $ConservativeResults = Invoke-TrainingBatch -RunName "Conservative" -Description "CONSERVATIVE / LOW LEARNING RATE" -Parameters $ConservativeParams -Seeds $AllSeeds
     $AllResults["Conservative"] = $ConservativeResults
     
@@ -490,8 +490,8 @@ if (-not $SkipAggressive) {
     Write-Host "======================================" -ForegroundColor Green
     Write-Host ""
     
-    # Run all 10 seeds in parallel
-    Write-Host "Running Aggressive (All 10 Seeds in Parallel)..." -ForegroundColor Yellow
+    # Run all 30 seeds in parallel
+    Write-Host "Running Aggressive (All 30 Seeds in Parallel)..." -ForegroundColor Yellow
     $AggressiveResults = Invoke-TrainingBatch -RunName "Aggressive" -Description "AGGRESSIVE / HIGH LEARNING RATE" -Parameters $AggressiveParams -Seeds $AllSeeds
     $AllResults["Aggressive"] = $AggressiveResults
     
@@ -509,8 +509,8 @@ if (-not $SkipModerate) {
     Write-Host "======================================" -ForegroundColor Green
     Write-Host ""
     
-    # Run all 10 seeds in parallel
-    Write-Host "Running Moderate (All 10 seeds in Parallel)..." -ForegroundColor Yellow
+    # Run all 30 seeds in parallel
+    Write-Host "Running Moderate (All 30 Seeds in Parallel)..." -ForegroundColor Yellow
     $ModerateResults = Invoke-TrainingBatch -RunName "Moderate" -Description "MODERATE / MEDIUM LEARNING RATE" -Parameters $ModerateParams -Seeds $AllSeeds
     $AllResults["Moderate"] = $ModerateResults
     
@@ -549,11 +549,21 @@ foreach ($flavor in @("Conservative", "Aggressive", "Moderate")) {
 }
 
 $SummaryReport = @"
-SIMPLEFPSTEMPLATE_FILFREIRE SPECIAL BATCH TRAINING SUMMARY REPORT - 10 seeds
+SIMPLEFPSTEMPLATE_FILFREIRE SPECIAL BATCH TRAINING SUMMARY REPORT - 30 SEEDS
 =============================================================================
 Start Time: $($StartTime.ToString("yyyy-MM-dd HH:mm:ss"))
 End Time: $($EndTime.ToString("yyyy-MM-dd HH:mm:ss"))
 Total Duration: $($TotalDuration.ToString("hh\:mm\:ss"))
+
+CONFIGURATION:
+- Conservative: Low learning rate, small batches (30 min timeout)
+- Aggressive: High learning rate, large batches (30 min timeout)  
+- Moderate: Medium learning rate, moderate batches (30 min timeout)
+
+BATCH STRUCTURE:
+- Each flavor runs 30 seeds total (seeds 1-30)
+- All 30 instances run in parallel for each flavor
+- 30-minute training per instance
 
 OVERALL RESULTS:
 - Total successful runs: $TotalSuccessful
@@ -584,12 +594,12 @@ NEXT STEPS:
 4. Analyze results to determine optimal hyperparameters and seed sensitivity
 "@
 
-$SummaryFile = Join-Path $SummaryDir "special_batch_training_10seeds_summary_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').txt"
+$SummaryFile = Join-Path $SummaryDir "special_batch_training_30seeds_summary_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss').txt"
 $SummaryReport | Out-File -FilePath $SummaryFile -Encoding UTF8
 
 # Summary
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "BATCH TRAINING SUMMARY - 10 seeds" -ForegroundColor Yellow
+Write-Host "BATCH TRAINING SUMMARY - 30 SEEDS" -ForegroundColor Yellow
 Write-Host "======================================" -ForegroundColor Cyan
 
 foreach ($flavor in @("Conservative", "Aggressive", "Moderate")) {
