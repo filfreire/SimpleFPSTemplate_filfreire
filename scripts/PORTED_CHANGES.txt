@@ -1,0 +1,54 @@
+﻿==========================================
+PORTED POWERSHELL SCRIPT CHANGES
+SimpleFPSTemplate_filfreire
+Date: 2025-10-04 11:17:56
+==========================================
+
+SOURCE: d:\unrealprojects\coop-game-fleep\scripts\
+TARGET: d:\unrealprojects\SimpleFPSTemplate_filfreire\scripts\
+
+FILES UPDATED:
+==============
+
+1. run-training-headless.ps1
+   - Added Get-SafeTaskName function for filesystem-safe task names
+   - Added New-UniqueTaskName function to generate unique task identifiers
+   - Combines: sanitized base name + 'seed' + seed value + 12-char GUID
+   - Example: 'MyTask-seed-123456-a1b2c3d4e5f6'
+   - Prevents concurrent training runs from reusing the same directories
+   - Auto-generates unique names if TrainingTaskName is empty
+
+2. run-batch-special.ps1
+   - Added Get-FirstNonEmptyString helper function
+   - Resolves nested arrays/collections to single string
+   - Fixes Join-Path errors when LogFileName becomes System.Object[]
+   - Enhanced concurrent training support (ConcurrentRuns parameter)
+   - Added seed generation and unique task naming per run
+   - Improved artifact collection and organization
+
+KEY IMPROVEMENTS:
+=================
+✓ Unique run directories for concurrent training (no more overwrites)
+✓ Robust log file name handling (no more Join-Path crashes)
+✓ GUID-based task naming ensures uniqueness across batch runs
+✓ Backward compatible with existing training workflows
+
+PROJECT-SPECIFIC REPLACEMENTS:
+===============================
+- 'COOPGAMEFLEEP' → 'SIMPLEFPSTEMPLATE'
+- 'CoopGameFleep' → 'FPSGame' (where appropriate)
+- 'CoopGameFleep.exe' → 'SIMPLEFPSTEMPLATE.exe'
+- 'coop-game-fleep' → 'SimpleFPSTemplate_filfreire'
+
+BACKUPS CREATED:
+================
+- run-training-headless.ps1.backup
+- run-batch-special.ps1.backup
+
+NEXT STEPS:
+===========
+1. Test run-training-headless.ps1 with -TrainingTaskName parameter
+2. Test run-batch-special.ps1 with multiple concurrent runs
+3. Verify TensorBoard logs are properly separated by task name
+4. Check that no Join-Path errors occur during batch artifact collection
+
