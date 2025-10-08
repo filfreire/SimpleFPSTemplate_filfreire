@@ -1,4 +1,4 @@
-# Batch Training Runner for SIMPLEFPSTEMPLATE
+# Batch Training Runner for FPSGame
 # This script runs multiple training configurations sequentially
 # Usage: .\scripts\run-batch-special.ps1
 
@@ -15,7 +15,7 @@ param(
     [int]$SeedMaximum = 2000000000,
     [string]$TrainingBuildDir = "TrainingBuild",
     [string]$MapName = "P_LearningAgentsTrial1",
-    [string]$ExeName = "SIMPLEFPSTEMPLATE.exe",
+    [string]$ExeName = "FPSGame.exe",
     [bool]$UseObstacles = $false,
     [int]$MaxObstacles = 8,
     [float]$MinObstacleSize = 100.0,
@@ -25,7 +25,7 @@ param(
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "SIMPLEFPSTEMPLATE BATCH TRAINING RUNNER" -ForegroundColor Green
+Write-Host "FPSGame BATCH TRAINING RUNNER" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -97,12 +97,12 @@ function Stop-OrphanedTrainingProcesses {
     Write-Host "CHECKING FOR ORPHANED TRAINING PROCESSES" -ForegroundColor Yellow
     Write-Host "======================================" -ForegroundColor Cyan
     
-    # Find and kill any running SIMPLEFPSTEMPLATE processes
-    $GameProcesses = Get-Process -Name "SIMPLEFPSTEMPLATE" -ErrorAction SilentlyContinue
+    # Find and kill any running FPSGame processes
+    $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
     if ($GameProcesses) {
-        Write-Host "Found $($GameProcesses.Count) orphaned SIMPLEFPSTEMPLATE.exe process(es)" -ForegroundColor Yellow
+        Write-Host "Found $($GameProcesses.Count) orphaned FPSGame.exe process(es)" -ForegroundColor Yellow
         foreach ($GameProc in $GameProcesses) {
-            Write-Host "Terminating orphaned SIMPLEFPSTEMPLATE.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
+            Write-Host "Terminating orphaned FPSGame.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
             
             # Method 1: Use taskkill with /T flag to kill process tree
             $taskkillResult = & taskkill /PID $GameProc.Id /T /F 2>&1
@@ -141,9 +141,9 @@ function Stop-OrphanedTrainingProcesses {
             $verificationAttempt++
             Write-Host "Verification attempt $verificationAttempt/$maxVerificationAttempts..." -ForegroundColor Cyan
             
-            $RemainingGameProcesses = Get-Process -Name "SIMPLEFPSTEMPLATE" -ErrorAction SilentlyContinue
+            $RemainingGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($RemainingGameProcesses) {
-                Write-Warning "Warning: $($RemainingGameProcesses.Count) SIMPLEFPSTEMPLATE.exe process(es) still running"
+                Write-Warning "Warning: $($RemainingGameProcesses.Count) FPSGame.exe process(es) still running"
                 
                 # Try one more aggressive termination attempt
                 foreach ($remainingProc in $RemainingGameProcesses) {
@@ -166,23 +166,23 @@ function Stop-OrphanedTrainingProcesses {
                 Start-Sleep -Seconds 2
             } else {
                 $allProcessesTerminated = $true
-                Write-Host "All SIMPLEFPSTEMPLATE.exe processes successfully terminated" -ForegroundColor Green
+                Write-Host "All FPSGame.exe processes successfully terminated" -ForegroundColor Green
             }
         }
         
         # Final verification
-        $FinalGameProcesses = Get-Process -Name "SIMPLEFPSTEMPLATE" -ErrorAction SilentlyContinue
+        $FinalGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
         if ($FinalGameProcesses) {
-            Write-Error "CRITICAL: $($FinalGameProcesses.Count) SIMPLEFPSTEMPLATE.exe process(es) still running after all termination attempts!"
+            Write-Error "CRITICAL: $($FinalGameProcesses.Count) FPSGame.exe process(es) still running after all termination attempts!"
             Write-Error "Manual intervention may be required to terminate these processes."
             foreach ($proc in $FinalGameProcesses) {
                 Write-Error "  - PID: $($proc.Id), ProcessName: $($proc.ProcessName)"
             }
         } else {
-            Write-Host "SUCCESS: All SIMPLEFPSTEMPLATE.exe processes confirmed terminated" -ForegroundColor Green
+            Write-Host "SUCCESS: All FPSGame.exe processes confirmed terminated" -ForegroundColor Green
         }
     } else {
-        Write-Host "No orphaned SIMPLEFPSTEMPLATE.exe processes found" -ForegroundColor Green
+        Write-Host "No orphaned FPSGame.exe processes found" -ForegroundColor Green
     }
     
     Write-Host ""
@@ -425,8 +425,8 @@ function Copy-TrainingArtifacts {
 
     if ($LogFileResolved) {
         $PossibleLogPaths = @(
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\SIMPLEFPSTEMPLATE\Saved\Logs") $LogFileName,
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\SIMPLEFPSTEMPLATE") $LogFileName,
+            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs") $LogFileName,
+            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame") $LogFileName,
             Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows") $LogFileName,
             Join-Path $ProjectDir $LogFileName
         )
@@ -787,7 +787,7 @@ Write-Host "Total Duration: $($BatchDuration.ToString("hh\:mm\:ss"))" -Foregroun
 Write-Host ""
 
 $SummaryBuilder = New-Object System.Text.StringBuilder
-$null = $SummaryBuilder.AppendLine("SIMPLEFPSTEMPLATE SPECIAL BATCH TRAINING SUMMARY REPORT")
+$null = $SummaryBuilder.AppendLine("FPSGame SPECIAL BATCH TRAINING SUMMARY REPORT")
 $null = $SummaryBuilder.AppendLine("==================================================")
 $null = $SummaryBuilder.AppendLine("Start Time: $($BatchStartTime.ToString('yyyy-MM-dd HH:mm:ss'))")
 $null = $SummaryBuilder.AppendLine("End Time:   $($BatchEndTime.ToString('yyyy-MM-dd HH:mm:ss'))")

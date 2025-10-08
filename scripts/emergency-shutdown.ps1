@@ -8,7 +8,7 @@ param(
 )
 
 Write-Host "======================================" -ForegroundColor Red
-Write-Host "EMERGENCY SHUTDOWN - SIMPLEFPSTEMPLATE_FILFREIRE" -ForegroundColor Red
+Write-Host "EMERGENCY SHUTDOWN - FPSGame" -ForegroundColor Red
 Write-Host "======================================" -ForegroundColor Red
 Write-Host ""
 
