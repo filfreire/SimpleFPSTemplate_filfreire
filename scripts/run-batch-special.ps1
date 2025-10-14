@@ -418,7 +418,15 @@ function Copy-TrainingArtifacts {
         }
     }
 
+    # Ensure LogFileName is converted to a string to avoid array issues with Join-Path
+    if ($LogFileName -is [System.Array]) {
+        $LogFileName = $LogFileName[0]
+    }
     $LogFileName = Get-FirstNonEmptyString -Value $LogFileName
+    # Convert to string to ensure it's not an object that could cause Join-Path issues
+    if ($LogFileName) {
+        $LogFileName = [string]$LogFileName
+    }
 
     $LogFileResolved = -not [string]::IsNullOrWhiteSpace($LogFileName)
     $LogCopied = $false
