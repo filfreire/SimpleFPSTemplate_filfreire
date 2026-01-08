@@ -495,22 +495,32 @@ function Copy-TrainingArtifacts {
     }
 
     if ($SelectedFolderPath) {
-        $TensorSource = Join-Path $SelectedFolderPath "TensorBoard\runs"
-        if (Test-Path $TensorSource) {
-            $TensorDest = Join-Path $Destinations.TensorBoard $TaskName
-            Copy-Item $TensorSource $TensorDest -Recurse -Force
-            Write-Host "Copied TensorBoard runs to $TensorDest" -ForegroundColor Green
+        # TensorBoard is in a shared location: Intermediate\LearningAgents\TensorBoard\runs
+        $SharedTensorBoardRoot = Join-Path $LearningAgentsRoot "TensorBoard\runs"
+        if (Test-Path $SharedTensorBoardRoot) {
+            # Find the matching TensorBoard run folder
+            $TensorBoardRunFolder = Get-ChildItem -Path $SharedTensorBoardRoot -Directory -ErrorAction SilentlyContinue |
+                                    Where-Object { $_.Name -like "${TaskName}*" } |
+                                    Select-Object -First 1
+            if ($TensorBoardRunFolder) {
+                $TensorDest = Join-Path $Destinations.TensorBoard $TaskName
+                Copy-Item $TensorBoardRunFolder.FullName $TensorDest -Recurse -Force
+                Write-Host "Copied TensorBoard runs to $TensorDest" -ForegroundColor Green
+            } else {
+                Write-Warning "TensorBoard runs not found for task $TaskName"
+            }
         } else {
-            Write-Warning "TensorBoard runs not found for task $TaskName"
+            Write-Warning "TensorBoard runs directory not found at $SharedTensorBoardRoot"
         }
 
-        $NeuralSource = Join-Path $SelectedFolderPath "NeuralNetworks"
-        if (Test-Path $NeuralSource) {
-            $NeuralDest = Join-Path $Destinations.NeuralNetworks $TaskName
-            Copy-Item $NeuralSource $NeuralDest -Recurse -Force
-            Write-Host "Copied neural network artifacts to $NeuralDest" -ForegroundColor Green
+        # Neural network snapshots are in the task-specific folder
+        $SnapshotsSource = Join-Path $SelectedFolderPath "Snapshots"
+        if (Test-Path $SnapshotsSource) {
+            $SnapshotsDest = Join-Path $Destinations.NeuralNetworks $TaskName
+            Copy-Item $SnapshotsSource $SnapshotsDest -Recurse -Force
+            Write-Host "Copied neural network snapshots to $SnapshotsDest" -ForegroundColor Green
         } else {
-            Write-Warning "Neural network artifacts not found for task $TaskName"
+            Write-Warning "Neural network snapshots not found for task $TaskName"
         }
 
         if ($CleanupIntermediate) {
