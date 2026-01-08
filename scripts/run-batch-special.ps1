@@ -7,7 +7,7 @@ param(
     [switch]$SkipAggressive = $false,
     [switch]$SkipBalanced = $false,
     [switch]$StopOnError = $false,
-    [string]$ResultsDir = "SpecialBatchResults",
+    [string]$ResultsDir = "3types_batch_30seeds_35min_results",
     [int]$SeedsPerConfig = 30,
     [int]$ConcurrentRuns = 8,
     [int]$TimeoutMinutes = 35,
