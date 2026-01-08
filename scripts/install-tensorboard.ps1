@@ -1,29 +1,56 @@
-# PowerShell script to install TensorBoard using Unreal's pip-installed Python
+# PowerShell script to install TensorBoard into Unreal Engine's Python environment
 
-# Define the path to the Python executable
-$pythonPath = "Intermediate\PipInstall\Scripts\python.exe"
+param(
+    [string]$UnrealPath = "",
+    [string]$ProjectPath = (Get-Location).Path
+)
 
-# Check if the Python executable exists
-if (Test-Path $pythonPath) {
-    Write-Host "Found Python executable at: $pythonPath" -ForegroundColor Green
+function Resolve-UnrealPath {
+    param([string]$PathFromArgs)
+
+    if (-not [string]::IsNullOrEmpty($PathFromArgs)) {
+        return $PathFromArgs
+    }
+
+    $hostname = [System.Net.Dns]::GetHostName()
+    switch -Regex ($hostname.ToLowerInvariant()) {
+        "^filfreire01$" { return "C:\\unreal\\UE_5.6" }
+        "^filfreire02$" { return "D:\\unreal\\UE_5.6" }
+        "^desktop-doap6m9$" { return "E:\\unreal\\UE_5.6" }
+        "^unreal-" { return "C:\\unreal\\UE_5.6" }
+        default { return "D:\\unreal\\UE_5.6" }
+    }
+}
+
+try {
+    $ResolvedUnrealPath = Resolve-UnrealPath -PathFromArgs $UnrealPath
     
-    # Install TensorBoard using the found Python executable
-    Write-Host "Installing TensorBoard..." -ForegroundColor Yellow
-    
-    try {
-        & $pythonPath -m pip install tensorboard
+    # Use Unreal's Python, not the project's local Python
+    $pythonPath = Join-Path $ResolvedUnrealPath "Engine\Binaries\ThirdParty\Python3\Win64\python.exe"
+
+    # Check if the Python executable exists
+    if (Test-Path $pythonPath) {
+        Write-Host "Found Unreal Engine's Python executable at: $pythonPath" -ForegroundColor Green
+        
+        # Install TensorBoard using Unreal's Python
+        Write-Host "Installing TensorBoard into Unreal Engine's Python environment..." -ForegroundColor Yellow
+        
+        & $pythonPath -m pip install tensorboard torch numpy
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "TensorBoard installed successfully!" -ForegroundColor Green
+            exit 0
         } else {
             Write-Host "Failed to install TensorBoard. Exit code: $LASTEXITCODE" -ForegroundColor Red
+            exit 1
         }
+    } else {
+        Write-Host "Unreal Engine's Python executable not found at: $pythonPath" -ForegroundColor Red
+        Write-Host "Please verify your Unreal Engine installation path." -ForegroundColor Yellow
+        exit 1
     }
-    catch {
-        Write-Host "Error occurred while installing TensorBoard: $($_.Exception.Message)" -ForegroundColor Red
-    }
-} else {
-    Write-Host "Python executable not found at: $pythonPath" -ForegroundColor Red
-    Write-Host "Make sure you have the Learning Agents plugin enabled and Python dependencies installed." -ForegroundColor Yellow
-    Write-Host "You may need to build your project first to generate the Python environment." -ForegroundColor Yellow
+}
+catch {
+    Write-Host "Error occurred while installing TensorBoard: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 }
