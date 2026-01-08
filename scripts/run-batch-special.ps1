@@ -461,9 +461,22 @@ function Copy-TrainingArtifacts {
     $SelectedFolderPath = $null
 
     if ($TaskName) {
+        # Try exact match first
         $Candidate = Join-Path $LearningAgentsRoot $TaskName
         if (Test-Path $Candidate) {
             $SelectedFolderPath = $Candidate
+        }
+        
+        # Try with wildcard (Unreal may append characters like "0" to task names)
+        if (-not $SelectedFolderPath) {
+            $Candidate = Join-Path $LearningAgentsRoot "${TaskName}*"
+            $Matches = Get-ChildItem -Path $LearningAgentsRoot -Directory -ErrorAction SilentlyContinue | 
+                       Where-Object { $_.Name -like "${TaskName}*" } | 
+                       Sort-Object LastWriteTime -Descending | 
+                       Select-Object -First 1
+            if ($Matches) {
+                $SelectedFolderPath = $Matches.FullName
+            }
         }
     }
 
