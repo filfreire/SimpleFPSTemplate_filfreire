@@ -412,6 +412,12 @@ function Copy-TrainingArtifacts {
         [switch]$CleanupIntermediate
     )
 
+    # DEFENSIVE: Unwrap LogFileName if it somehow ended up as an array despite [string] type
+    while ($LogFileName -is [array] -and $LogFileName.Count -gt 0) {
+        $LogFileName = $LogFileName[0]
+    }
+    $LogFileName = "$LogFileName"  # Force string conversion
+
     foreach ($Path in $Destinations.Values) {
         if ($Path -and -not (Test-Path $Path)) {
             New-Item -ItemType Directory -Path $Path -Force | Out-Null
@@ -422,11 +428,16 @@ function Copy-TrainingArtifacts {
     $LogCopied = $false
 
     if ($LogFileResolved) {
+        # Build paths individually to avoid array evaluation issues
+        $BasePath1 = Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs"
+        $BasePath2 = Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame"
+        $BasePath3 = Join-Path $ProjectDir "TrainingBuild\Windows"
+        
         $PossibleLogPaths = @(
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs") $LogFileName,
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame") $LogFileName,
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows") $LogFileName,
-            Join-Path $ProjectDir $LogFileName
+            (Join-Path $BasePath1 $LogFileName),
+            (Join-Path $BasePath2 $LogFileName),
+            (Join-Path $BasePath3 $LogFileName),
+            (Join-Path $ProjectDir $LogFileName)
         )
 
         foreach ($Source in $PossibleLogPaths) {
@@ -731,8 +742,22 @@ while (($NextRunIndex -lt $TotalRunsScheduled -and -not $StopRequested) -or $Act
             Write-Host "Completed [$($Active.Run.ConfigName)] seed $($Active.Run.Seed) -> $Status (ExitCode: $ExitCode)" -ForegroundColor Cyan
 
             # Ensure LogFile is a string before passing to Copy-TrainingArtifacts
-            $LogFileString = if ($Active.LogFile -is [array]) { $Active.LogFile[0] } else { $Active.LogFile }
-            $LogFileString = [string]$LogFileString
+            # Aggressively unwrap any arrays
+            $LogFileString = $Active.LogFile
+            while ($LogFileString -is [array] -or $LogFileString -is [System.Collections.IEnumerable]) {
+                if ($LogFileString -is [string]) { break }
+                if ($LogFileString -is [array] -and $LogFileString.Count -gt 0) {
+                    $LogFileString = $LogFileString[0]
+                } else {
+                    break
+                }
+            }
+            # Force to string and ensure it's not null
+            if ($null -eq $LogFileString) {
+                $LogFileString = ""
+            } else {
+                $LogFileString = "$LogFileString"
+            }
 
             Copy-TrainingArtifacts -ProjectDir $ProjectDir -Run $Active.Run -TaskName $Active.TaskName -LogFileName $LogFileString -Destinations $ConfigDestinations[$Active.Run.ConfigName] -Status $Status -CleanupIntermediate:$CleanupIntermediate
 
