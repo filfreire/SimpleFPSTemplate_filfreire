@@ -8,9 +8,9 @@ param(
     [switch]$SkipBalanced = $false,
     [switch]$StopOnError = $false,
     [string]$ResultsDir = "SpecialBatchResults",
-    [int]$SeedsPerConfig = 30,
+    [int]$SeedsPerConfig = 2,
     [int]$ConcurrentRuns = 8,
-    [int]$TimeoutMinutes = 30,
+    [int]$TimeoutMinutes = 10,
     [int]$SeedMinimum = 1,
     [int]$SeedMaximum = 2000000000,
     [string]$TrainingBuildDir = "TrainingBuild",
@@ -374,30 +374,30 @@ function Get-FirstNonEmptyString {
         return $null
     }
 
+    # Check for string FIRST before IEnumerable (since strings are also IEnumerable)
     if ($Value -is [string]) {
         if ([string]::IsNullOrWhiteSpace($Value)) {
             return $null
         }
-
         return $Value
     }
 
-    if ($Value -is [System.Collections.IEnumerable]) {
+    # Check for arrays/collections but exclude strings
+    if ($Value -is [System.Array] -or ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string])) {
         foreach ($Item in $Value) {
             $Candidate = Get-FirstNonEmptyString -Value $Item
             if ($null -ne $Candidate) {
                 return $Candidate
             }
         }
-
         return $null
     }
 
+    # For other objects, convert to string
     $Text = $Value.ToString()
     if ([string]::IsNullOrWhiteSpace($Text)) {
         return $null
     }
-
     return $Text
 }
 
@@ -406,7 +406,7 @@ function Copy-TrainingArtifacts {
         [string]$ProjectDir,
         [pscustomobject]$Run,
         [string]$TaskName,
-    [object]$LogFileName,
+        [string]$LogFileName,
         [hashtable]$Destinations,
         [string]$Status,
         [switch]$CleanupIntermediate
@@ -416,22 +416,6 @@ function Copy-TrainingArtifacts {
         if ($Path -and -not (Test-Path $Path)) {
             New-Item -ItemType Directory -Path $Path -Force | Out-Null
         }
-    }
-
-    # Ensure LogFileName is converted to a string to avoid array issues with Join-Path
-    if ($LogFileName -is [System.Array]) {
-        $LogFileName = $LogFileName[0]
-    }
-    $LogFileName = Get-FirstNonEmptyString -Value $LogFileName
-    
-    # Force conversion to string and handle any remaining object issues
-    if ($null -ne $LogFileName) {
-        # If it's still an array after Get-FirstNonEmptyString, take the first element
-        if ($LogFileName -is [System.Array]) {
-            $LogFileName = $LogFileName[0]
-        }
-        # Convert to string explicitly, using ToString() method to ensure proper conversion
-        $LogFileName = "$LogFileName"
     }
 
     $LogFileResolved = -not [string]::IsNullOrWhiteSpace($LogFileName)
@@ -746,7 +730,11 @@ while (($NextRunIndex -lt $TotalRunsScheduled -and -not $StopRequested) -or $Act
             $Duration = $EndTimeRun - $Active.StartTime
             Write-Host "Completed [$($Active.Run.ConfigName)] seed $($Active.Run.Seed) -> $Status (ExitCode: $ExitCode)" -ForegroundColor Cyan
 
-            Copy-TrainingArtifacts -ProjectDir $ProjectDir -Run $Active.Run -TaskName $Active.TaskName -LogFileName $Active.LogFile -Destinations $ConfigDestinations[$Active.Run.ConfigName] -Status $Status -CleanupIntermediate:$CleanupIntermediate
+            # Ensure LogFile is a string before passing to Copy-TrainingArtifacts
+            $LogFileString = if ($Active.LogFile -is [array]) { $Active.LogFile[0] } else { $Active.LogFile }
+            $LogFileString = [string]$LogFileString
+
+            Copy-TrainingArtifacts -ProjectDir $ProjectDir -Run $Active.Run -TaskName $Active.TaskName -LogFileName $LogFileString -Destinations $ConfigDestinations[$Active.Run.ConfigName] -Status $Status -CleanupIntermediate:$CleanupIntermediate
 
             $Record = [pscustomobject]@{
                 Index          = $Active.Run.Index
