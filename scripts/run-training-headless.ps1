@@ -294,7 +294,28 @@ try {
             # Enhanced process termination for SSH environments
             $terminationSuccess = $false
             
-            # First, try to find and kill any FPSGame processes that might be running
+            # CRITICAL: Kill Python subprocesses spawned by Learning Agents FIRST
+            # These are orphaned when the main process is killed and cause NetworkId conflicts
+            Write-Host "Searching for orphaned Python Learning Agents subprocesses..." -ForegroundColor Cyan
+            $PythonProcesses = Get-Process -Name "python" -ErrorAction SilentlyContinue
+            if ($PythonProcesses) {
+                Write-Host "Found $($PythonProcesses.Count) Python process(es), checking for Learning Agents subprocesses..." -ForegroundColor Yellow
+                foreach ($PyProc in $PythonProcesses) {
+                    try {
+                        # Check if this Python process is related to Learning Agents
+                        $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($PyProc.Id)").CommandLine
+                        if ($cmdLine -and ($cmdLine -like "*LearningAgents*" -or $cmdLine -like "*learning*" -or $cmdLine -like "*training*")) {
+                            Write-Host "Terminating Learning Agents Python subprocess (PID: $($PyProc.Id))..." -ForegroundColor Yellow
+                            & taskkill /PID $PyProc.Id /F /T 2>$null
+                            Write-Host "Python subprocess (PID: $($PyProc.Id)) terminated" -ForegroundColor Green
+                        }
+                    } catch {
+                        # Silently continue if we can't check the command line
+                    }
+                }
+            }
+            
+            # Then, try to find and kill any FPSGame processes that might be running
             $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($GameProcesses) {
                 Write-Host "Found $($GameProcesses.Count) FPSGame.exe process(es) to terminate" -ForegroundColor Cyan

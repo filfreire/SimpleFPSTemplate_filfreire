@@ -97,6 +97,40 @@ function Stop-OrphanedTrainingProcesses {
     Write-Host "CHECKING FOR ORPHANED TRAINING PROCESSES" -ForegroundColor Yellow
     Write-Host "======================================" -ForegroundColor Cyan
     
+    # CRITICAL: Kill Python subprocesses spawned by Learning Agents FIRST
+    # These are orphaned when the main process is killed and cause NetworkId conflicts
+    Write-Host "Searching for orphaned Python Learning Agents subprocesses..." -ForegroundColor Cyan
+    $PythonProcesses = Get-Process -Name "python" -ErrorAction SilentlyContinue
+    if ($PythonProcesses) {
+        Write-Host "Found $($PythonProcesses.Count) Python process(es), checking for Learning Agents subprocesses..." -ForegroundColor Yellow
+        $killedPythonCount = 0
+        foreach ($PyProc in $PythonProcesses) {
+            try {
+                # Check if this Python process is related to Learning Agents
+                $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($PyProc.Id)").CommandLine
+                if ($cmdLine -and ($cmdLine -like "*LearningAgents*" -or $cmdLine -like "*learning*" -or $cmdLine -like "*training*")) {
+                    Write-Host "Terminating Learning Agents Python subprocess (PID: $($PyProc.Id))..." -ForegroundColor Yellow
+                    & taskkill /PID $PyProc.Id /F /T 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        $killedPythonCount++
+                    }
+                }
+            } catch {
+                # Silently continue if we can't check the command line
+            }
+        }
+        
+        if ($killedPythonCount -gt 0) {
+            Write-Host "Terminated $killedPythonCount Learning Agents Python subprocess(es)" -ForegroundColor Green
+        } else {
+            Write-Host "No Learning Agents Python subprocesses found" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "No Python processes found" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+    
     # Find and kill any running FPSGame processes
     $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
     if ($GameProcesses) {

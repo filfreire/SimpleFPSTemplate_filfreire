@@ -328,8 +328,9 @@ void AFPSCharacterManager::InitializeAgents()
 			Agents.Contains(Actor) ? TEXT("YES") : TEXT("NO"));
 	}
 
-	// FIXED: Clear any existing agents first to ensure clean state
-	LearningAgentsManager->RemoveAllAgents();
+	// NOTE: Removed RemoveAllAgents() call - it orphans Python subprocesses
+	// Learning Agents will handle agent lifecycle internally
+	// If you need to reinitialize, restart the entire training session instead
 
 	// Store agent registration results for verification
 	TArray<int32> SuccessfulAgentIds;
