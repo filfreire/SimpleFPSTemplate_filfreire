@@ -8,7 +8,7 @@ param(
 )
 
 Write-Host "======================================" -ForegroundColor Red
-Write-Host "EMERGENCY SHUTDOWN - SIMPLEFPSTEMPLATE_FILFREIRE" -ForegroundColor Red
+Write-Host "EMERGENCY SHUTDOWN - FPSGame" -ForegroundColor Red
 Write-Host "======================================" -ForegroundColor Red
 Write-Host ""
 
@@ -194,6 +194,43 @@ $MainTerminated = Stop-ProcessForcefully -ProcessName "FPSGame" -Description "MA
 
 # Step 2: Kill related processes
 $RelatedTerminated = Stop-RelatedProcesses
+
+# Step 2.5: Kill Python Learning Agents subprocesses that may be orphaned
+Write-Host "======================================" -ForegroundColor Cyan
+Write-Host "TERMINATING PYTHON LEARNING AGENTS SUBPROCESSES" -ForegroundColor Yellow
+Write-Host "======================================" -ForegroundColor Cyan
+
+$PythonProcesses = Get-Process -Name "python" -ErrorAction SilentlyContinue
+if ($PythonProcesses) {
+    Write-Host "Found $($PythonProcesses.Count) Python process(es), checking for Learning Agents subprocesses..." -ForegroundColor Yellow
+    $killedPythonCount = 0
+    foreach ($PyProc in $PythonProcesses) {
+        try {
+            # Check if this Python process is related to Learning Agents
+            $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($PyProc.Id)").CommandLine
+            if ($cmdLine -and ($cmdLine -like "*LearningAgents*" -or $cmdLine -like "*learning*" -or $cmdLine -like "*training*")) {
+                Write-Host "  Terminating Learning Agents Python subprocess (PID: $($PyProc.Id))..." -ForegroundColor Yellow
+                & taskkill /PID $PyProc.Id /F /T 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "    Python subprocess (PID: $($PyProc.Id)) terminated successfully" -ForegroundColor Green
+                    $killedPythonCount++
+                }
+            }
+        } catch {
+            # Silently continue if we can't check the command line
+        }
+    }
+    
+    if ($killedPythonCount -gt 0) {
+        Write-Host "Terminated $killedPythonCount Learning Agents Python subprocess(es)" -ForegroundColor Green
+    } else {
+        Write-Host "No Learning Agents Python subprocesses found" -ForegroundColor Green
+    }
+} else {
+    Write-Host "No Python processes found" -ForegroundColor Green
+}
+
+Write-Host ""
 
 # Step 3: Additional cleanup - kill any processes that might be holding onto game resources
 Write-Host "======================================" -ForegroundColor Cyan

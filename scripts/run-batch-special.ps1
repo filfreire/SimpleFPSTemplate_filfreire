@@ -1,4 +1,4 @@
-# Batch Training Runner for SIMPLEFPSTEMPLATE
+# Batch Training Runner for FPSGame
 # This script runs multiple training configurations sequentially
 # Usage: .\scripts\run-batch-special.ps1
 
@@ -7,15 +7,15 @@ param(
     [switch]$SkipAggressive = $false,
     [switch]$SkipBalanced = $false,
     [switch]$StopOnError = $false,
-    [string]$ResultsDir = "SpecialBatchResults",
+    [string]$ResultsDir = "3types_batch_30seeds_35min_results",
     [int]$SeedsPerConfig = 30,
-    [int]$ConcurrentRuns = 15,
-    [int]$TimeoutMinutes = 5,
+    [int]$ConcurrentRuns = 8,
+    [int]$TimeoutMinutes = 35,
     [int]$SeedMinimum = 1,
     [int]$SeedMaximum = 2000000000,
     [string]$TrainingBuildDir = "TrainingBuild",
     [string]$MapName = "P_LearningAgentsTrial1",
-    [string]$ExeName = "SIMPLEFPSTEMPLATE.exe",
+    [string]$ExeName = "FPSGame.exe",
     [bool]$UseObstacles = $false,
     [int]$MaxObstacles = 8,
     [float]$MinObstacleSize = 100.0,
@@ -25,7 +25,7 @@ param(
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "SIMPLEFPSTEMPLATE BATCH TRAINING RUNNER" -ForegroundColor Green
+Write-Host "FPSGame BATCH TRAINING RUNNER" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -97,12 +97,46 @@ function Stop-OrphanedTrainingProcesses {
     Write-Host "CHECKING FOR ORPHANED TRAINING PROCESSES" -ForegroundColor Yellow
     Write-Host "======================================" -ForegroundColor Cyan
     
-    # Find and kill any running SIMPLEFPSTEMPLATE processes
-    $GameProcesses = Get-Process -Name "SIMPLEFPSTEMPLATE" -ErrorAction SilentlyContinue
+    # CRITICAL: Kill Python subprocesses spawned by Learning Agents FIRST
+    # These are orphaned when the main process is killed and cause NetworkId conflicts
+    Write-Host "Searching for orphaned Python Learning Agents subprocesses..." -ForegroundColor Cyan
+    $PythonProcesses = Get-Process -Name "python" -ErrorAction SilentlyContinue
+    if ($PythonProcesses) {
+        Write-Host "Found $($PythonProcesses.Count) Python process(es), checking for Learning Agents subprocesses..." -ForegroundColor Yellow
+        $killedPythonCount = 0
+        foreach ($PyProc in $PythonProcesses) {
+            try {
+                # Check if this Python process is related to Learning Agents
+                $cmdLine = (Get-WmiObject Win32_Process -Filter "ProcessId = $($PyProc.Id)").CommandLine
+                if ($cmdLine -and ($cmdLine -like "*LearningAgents*" -or $cmdLine -like "*learning*" -or $cmdLine -like "*training*")) {
+                    Write-Host "Terminating Learning Agents Python subprocess (PID: $($PyProc.Id))..." -ForegroundColor Yellow
+                    & taskkill /PID $PyProc.Id /F /T 2>$null
+                    if ($LASTEXITCODE -eq 0) {
+                        $killedPythonCount++
+                    }
+                }
+            } catch {
+                # Silently continue if we can't check the command line
+            }
+        }
+        
+        if ($killedPythonCount -gt 0) {
+            Write-Host "Terminated $killedPythonCount Learning Agents Python subprocess(es)" -ForegroundColor Green
+        } else {
+            Write-Host "No Learning Agents Python subprocesses found" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "No Python processes found" -ForegroundColor Green
+    }
+    
+    Write-Host ""
+    
+    # Find and kill any running FPSGame processes
+    $GameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
     if ($GameProcesses) {
-        Write-Host "Found $($GameProcesses.Count) orphaned SIMPLEFPSTEMPLATE.exe process(es)" -ForegroundColor Yellow
+        Write-Host "Found $($GameProcesses.Count) orphaned FPSGame.exe process(es)" -ForegroundColor Yellow
         foreach ($GameProc in $GameProcesses) {
-            Write-Host "Terminating orphaned SIMPLEFPSTEMPLATE.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
+            Write-Host "Terminating orphaned FPSGame.exe (PID: $($GameProc.Id)) and its process tree..." -ForegroundColor Yellow
             
             # Method 1: Use taskkill with /T flag to kill process tree
             $taskkillResult = & taskkill /PID $GameProc.Id /T /F 2>&1
@@ -141,9 +175,9 @@ function Stop-OrphanedTrainingProcesses {
             $verificationAttempt++
             Write-Host "Verification attempt $verificationAttempt/$maxVerificationAttempts..." -ForegroundColor Cyan
             
-            $RemainingGameProcesses = Get-Process -Name "SIMPLEFPSTEMPLATE" -ErrorAction SilentlyContinue
+            $RemainingGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
             if ($RemainingGameProcesses) {
-                Write-Warning "Warning: $($RemainingGameProcesses.Count) SIMPLEFPSTEMPLATE.exe process(es) still running"
+                Write-Warning "Warning: $($RemainingGameProcesses.Count) FPSGame.exe process(es) still running"
                 
                 # Try one more aggressive termination attempt
                 foreach ($remainingProc in $RemainingGameProcesses) {
@@ -166,23 +200,23 @@ function Stop-OrphanedTrainingProcesses {
                 Start-Sleep -Seconds 2
             } else {
                 $allProcessesTerminated = $true
-                Write-Host "All SIMPLEFPSTEMPLATE.exe processes successfully terminated" -ForegroundColor Green
+                Write-Host "All FPSGame.exe processes successfully terminated" -ForegroundColor Green
             }
         }
         
         # Final verification
-        $FinalGameProcesses = Get-Process -Name "SIMPLEFPSTEMPLATE" -ErrorAction SilentlyContinue
+        $FinalGameProcesses = Get-Process -Name "FPSGame" -ErrorAction SilentlyContinue
         if ($FinalGameProcesses) {
-            Write-Error "CRITICAL: $($FinalGameProcesses.Count) SIMPLEFPSTEMPLATE.exe process(es) still running after all termination attempts!"
+            Write-Error "CRITICAL: $($FinalGameProcesses.Count) FPSGame.exe process(es) still running after all termination attempts!"
             Write-Error "Manual intervention may be required to terminate these processes."
             foreach ($proc in $FinalGameProcesses) {
                 Write-Error "  - PID: $($proc.Id), ProcessName: $($proc.ProcessName)"
             }
         } else {
-            Write-Host "SUCCESS: All SIMPLEFPSTEMPLATE.exe processes confirmed terminated" -ForegroundColor Green
+            Write-Host "SUCCESS: All FPSGame.exe processes confirmed terminated" -ForegroundColor Green
         }
     } else {
-        Write-Host "No orphaned SIMPLEFPSTEMPLATE.exe processes found" -ForegroundColor Green
+        Write-Host "No orphaned FPSGame.exe processes found" -ForegroundColor Green
     }
     
     Write-Host ""
@@ -374,30 +408,30 @@ function Get-FirstNonEmptyString {
         return $null
     }
 
+    # Check for string FIRST before IEnumerable (since strings are also IEnumerable)
     if ($Value -is [string]) {
         if ([string]::IsNullOrWhiteSpace($Value)) {
             return $null
         }
-
         return $Value
     }
 
-    if ($Value -is [System.Collections.IEnumerable]) {
+    # Check for arrays/collections but exclude strings
+    if ($Value -is [System.Array] -or ($Value -is [System.Collections.IEnumerable] -and $Value -isnot [string])) {
         foreach ($Item in $Value) {
             $Candidate = Get-FirstNonEmptyString -Value $Item
             if ($null -ne $Candidate) {
                 return $Candidate
             }
         }
-
         return $null
     }
 
+    # For other objects, convert to string
     $Text = $Value.ToString()
     if ([string]::IsNullOrWhiteSpace($Text)) {
         return $null
     }
-
     return $Text
 }
 
@@ -406,11 +440,17 @@ function Copy-TrainingArtifacts {
         [string]$ProjectDir,
         [pscustomobject]$Run,
         [string]$TaskName,
-    [object]$LogFileName,
+        [string]$LogFileName,
         [hashtable]$Destinations,
         [string]$Status,
         [switch]$CleanupIntermediate
     )
+
+    # DEFENSIVE: Unwrap LogFileName if it somehow ended up as an array despite [string] type
+    while ($LogFileName -is [array] -and $LogFileName.Count -gt 0) {
+        $LogFileName = $LogFileName[0]
+    }
+    $LogFileName = "$LogFileName"  # Force string conversion
 
     foreach ($Path in $Destinations.Values) {
         if ($Path -and -not (Test-Path $Path)) {
@@ -418,17 +458,20 @@ function Copy-TrainingArtifacts {
         }
     }
 
-    $LogFileName = Get-FirstNonEmptyString -Value $LogFileName
-
     $LogFileResolved = -not [string]::IsNullOrWhiteSpace($LogFileName)
     $LogCopied = $false
 
     if ($LogFileResolved) {
+        # Build paths individually to avoid array evaluation issues
+        $BasePath1 = Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame\Saved\Logs"
+        $BasePath2 = Join-Path $ProjectDir "TrainingBuild\Windows\FPSGame"
+        $BasePath3 = Join-Path $ProjectDir "TrainingBuild\Windows"
+        
         $PossibleLogPaths = @(
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\SIMPLEFPSTEMPLATE\Saved\Logs") $LogFileName,
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows\SIMPLEFPSTEMPLATE") $LogFileName,
-            Join-Path (Join-Path $ProjectDir "TrainingBuild\Windows") $LogFileName,
-            Join-Path $ProjectDir $LogFileName
+            (Join-Path $BasePath1 $LogFileName),
+            (Join-Path $BasePath2 $LogFileName),
+            (Join-Path $BasePath3 $LogFileName),
+            (Join-Path $ProjectDir $LogFileName)
         )
 
         foreach ($Source in $PossibleLogPaths) {
@@ -452,9 +495,22 @@ function Copy-TrainingArtifacts {
     $SelectedFolderPath = $null
 
     if ($TaskName) {
+        # Try exact match first
         $Candidate = Join-Path $LearningAgentsRoot $TaskName
         if (Test-Path $Candidate) {
             $SelectedFolderPath = $Candidate
+        }
+        
+        # Try with wildcard (Unreal may append characters like "0" to task names)
+        if (-not $SelectedFolderPath) {
+            $Candidate = Join-Path $LearningAgentsRoot "${TaskName}*"
+            $Matches = Get-ChildItem -Path $LearningAgentsRoot -Directory -ErrorAction SilentlyContinue | 
+                       Where-Object { $_.Name -like "${TaskName}*" } | 
+                       Sort-Object LastWriteTime -Descending | 
+                       Select-Object -First 1
+            if ($Matches) {
+                $SelectedFolderPath = $Matches.FullName
+            }
         }
     }
 
@@ -473,22 +529,32 @@ function Copy-TrainingArtifacts {
     }
 
     if ($SelectedFolderPath) {
-        $TensorSource = Join-Path $SelectedFolderPath "TensorBoard\runs"
-        if (Test-Path $TensorSource) {
-            $TensorDest = Join-Path $Destinations.TensorBoard $TaskName
-            Copy-Item $TensorSource $TensorDest -Recurse -Force
-            Write-Host "Copied TensorBoard runs to $TensorDest" -ForegroundColor Green
+        # TensorBoard is in a shared location: Intermediate\LearningAgents\TensorBoard\runs
+        $SharedTensorBoardRoot = Join-Path $LearningAgentsRoot "TensorBoard\runs"
+        if (Test-Path $SharedTensorBoardRoot) {
+            # Find the matching TensorBoard run folder
+            $TensorBoardRunFolder = Get-ChildItem -Path $SharedTensorBoardRoot -Directory -ErrorAction SilentlyContinue |
+                                    Where-Object { $_.Name -like "${TaskName}*" } |
+                                    Select-Object -First 1
+            if ($TensorBoardRunFolder) {
+                $TensorDest = Join-Path $Destinations.TensorBoard $TaskName
+                Copy-Item $TensorBoardRunFolder.FullName $TensorDest -Recurse -Force
+                Write-Host "Copied TensorBoard runs to $TensorDest" -ForegroundColor Green
+            } else {
+                Write-Warning "TensorBoard runs not found for task $TaskName"
+            }
         } else {
-            Write-Warning "TensorBoard runs not found for task $TaskName"
+            Write-Warning "TensorBoard runs directory not found at $SharedTensorBoardRoot"
         }
 
-        $NeuralSource = Join-Path $SelectedFolderPath "NeuralNetworks"
-        if (Test-Path $NeuralSource) {
-            $NeuralDest = Join-Path $Destinations.NeuralNetworks $TaskName
-            Copy-Item $NeuralSource $NeuralDest -Recurse -Force
-            Write-Host "Copied neural network artifacts to $NeuralDest" -ForegroundColor Green
+        # Neural network snapshots are in the task-specific folder
+        $SnapshotsSource = Join-Path $SelectedFolderPath "Snapshots"
+        if (Test-Path $SnapshotsSource) {
+            $SnapshotsDest = Join-Path $Destinations.NeuralNetworks $TaskName
+            Copy-Item $SnapshotsSource $SnapshotsDest -Recurse -Force
+            Write-Host "Copied neural network snapshots to $SnapshotsDest" -ForegroundColor Green
         } else {
-            Write-Warning "Neural network artifacts not found for task $TaskName"
+            Write-Warning "Neural network snapshots not found for task $TaskName"
         }
 
         if ($CleanupIntermediate) {
@@ -732,7 +798,25 @@ while (($NextRunIndex -lt $TotalRunsScheduled -and -not $StopRequested) -or $Act
             $Duration = $EndTimeRun - $Active.StartTime
             Write-Host "Completed [$($Active.Run.ConfigName)] seed $($Active.Run.Seed) -> $Status (ExitCode: $ExitCode)" -ForegroundColor Cyan
 
-            Copy-TrainingArtifacts -ProjectDir $ProjectDir -Run $Active.Run -TaskName $Active.TaskName -LogFileName $Active.LogFile -Destinations $ConfigDestinations[$Active.Run.ConfigName] -Status $Status -CleanupIntermediate:$CleanupIntermediate
+            # Ensure LogFile is a string before passing to Copy-TrainingArtifacts
+            # Aggressively unwrap any arrays
+            $LogFileString = $Active.LogFile
+            while ($LogFileString -is [array] -or $LogFileString -is [System.Collections.IEnumerable]) {
+                if ($LogFileString -is [string]) { break }
+                if ($LogFileString -is [array] -and $LogFileString.Count -gt 0) {
+                    $LogFileString = $LogFileString[0]
+                } else {
+                    break
+                }
+            }
+            # Force to string and ensure it's not null
+            if ($null -eq $LogFileString) {
+                $LogFileString = ""
+            } else {
+                $LogFileString = "$LogFileString"
+            }
+
+            Copy-TrainingArtifacts -ProjectDir $ProjectDir -Run $Active.Run -TaskName $Active.TaskName -LogFileName $LogFileString -Destinations $ConfigDestinations[$Active.Run.ConfigName] -Status $Status -CleanupIntermediate:$CleanupIntermediate
 
             $Record = [pscustomobject]@{
                 Index          = $Active.Run.Index
@@ -787,7 +871,7 @@ Write-Host "Total Duration: $($BatchDuration.ToString("hh\:mm\:ss"))" -Foregroun
 Write-Host ""
 
 $SummaryBuilder = New-Object System.Text.StringBuilder
-$null = $SummaryBuilder.AppendLine("SIMPLEFPSTEMPLATE SPECIAL BATCH TRAINING SUMMARY REPORT")
+$null = $SummaryBuilder.AppendLine("FPSGame SPECIAL BATCH TRAINING SUMMARY REPORT")
 $null = $SummaryBuilder.AppendLine("==================================================")
 $null = $SummaryBuilder.AppendLine("Start Time: $($BatchStartTime.ToString('yyyy-MM-dd HH:mm:ss'))")
 $null = $SummaryBuilder.AppendLine("End Time:   $($BatchEndTime.ToString('yyyy-MM-dd HH:mm:ss'))")

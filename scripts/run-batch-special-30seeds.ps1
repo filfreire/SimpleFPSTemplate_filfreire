@@ -12,7 +12,7 @@ param(
 )
 
 Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "SIMPLEFPSTEMPLATE_FILFREIRE BATCH TRAINING RUNNER - 30 SEEDS" -ForegroundColor Green
+Write-Host "FPSGame BATCH TRAINING RUNNER - 30 SEEDS" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -549,7 +549,7 @@ foreach ($flavor in @("Conservative", "Aggressive", "Moderate")) {
 }
 
 $SummaryReport = @"
-SIMPLEFPSTEMPLATE_FILFREIRE SPECIAL BATCH TRAINING SUMMARY REPORT - 30 SEEDS
+FPSGame SPECIAL BATCH TRAINING SUMMARY REPORT - 30 SEEDS
 =============================================================================
 Start Time: $($StartTime.ToString("yyyy-MM-dd HH:mm:ss"))
 End Time: $($EndTime.ToString("yyyy-MM-dd HH:mm:ss"))

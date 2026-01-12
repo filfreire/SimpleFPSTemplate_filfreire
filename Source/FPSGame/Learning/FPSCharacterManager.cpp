@@ -239,11 +239,34 @@ AFPSCharacterManager::AFPSCharacterManager()
 	
 	TrainerProcessSettings.NonEditorEngineRelativePath = EnginePath;
 	TrainerProcessSettings.NonEditorIntermediateRelativePath = TEXT("../../../../../Intermediate");
-	
+
+	FString RequestedTaskName;
+	const bool bHasRequestedTaskName = FParse::Value(*CommandLine, TEXT("-TrainingTaskName="), RequestedTaskName);
+
+	if (bHasRequestedTaskName)
+	{
+		RequestedTaskName = RequestedTaskName.TrimStartAndEnd();
+		if (!RequestedTaskName.IsEmpty())
+		{
+			const FString SanitizedTaskName = FPaths::MakeValidFileName(RequestedTaskName);
+			if (!SanitizedTaskName.IsEmpty())
+			{
+				TrainerProcessSettings.TaskName = SanitizedTaskName;
+				UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Trainer TaskName set to '%s'"), *TrainerProcessSettings.TaskName);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("FPSCharacterManager: Provided TrainingTaskName '%s' sanitized to empty string; auto-generating TaskName (previous default '%s')."),
+					*RequestedTaskName, *TrainerProcessSettings.TaskName);
+			}
+		}
+	}
+
 	// Log the configured paths for debugging
 	UE_LOG(LogTemp, Log, TEXT("FPSCharacterManager: Configured trainer paths for hostname '%s':"), *HostName);
 	UE_LOG(LogTemp, Log, TEXT("  Engine Path: %s"), *TrainerProcessSettings.NonEditorEngineRelativePath);
 	UE_LOG(LogTemp, Log, TEXT("  Intermediate Path: %s"), *TrainerProcessSettings.NonEditorIntermediateRelativePath);
+	UE_LOG(LogTemp, Log, TEXT("  Task Name: %s"), *TrainerProcessSettings.TaskName);
 
 	LearningAgentsManager = CreateDefaultSubobject<UFPSCharacterManagerComponent>(TEXT("Learning Agents Manager"));
 }
@@ -305,8 +328,9 @@ void AFPSCharacterManager::InitializeAgents()
 			Agents.Contains(Actor) ? TEXT("YES") : TEXT("NO"));
 	}
 
-	// FIXED: Clear any existing agents first to ensure clean state
-	LearningAgentsManager->RemoveAllAgents();
+	// NOTE: Removed RemoveAllAgents() call - it orphans Python subprocesses
+	// Learning Agents will handle agent lifecycle internally
+	// If you need to reinitialize, restart the entire training session instead
 
 	// Store agent registration results for verification
 	TArray<int32> SuccessfulAgentIds;

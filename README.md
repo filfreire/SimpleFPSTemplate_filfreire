@@ -26,12 +26,33 @@ Tested on:
 
 - To build/compile, run: `.\scripts\build-local.ps1`
 
-- To package, run: `.\scripts\package-local.ps1`
+- To package, run: `.\scripts\package.ps1` (includes dependency installation)
+
+### Learning Agents Setup
+
+**Quick setup (recommended):** Just run `.\scripts\package.ps1` - it automatically installs all dependencies (TensorBoard, PyTorch, NumPy) and packages the project.
+
+For manual/separate steps:
+
+1. **Install dependencies only** (TensorBoard, PyTorch, NumPy into Unreal Engine's Python):
+   ```powershell
+   .\scripts\setup.ps1
+   ```
+
+2. **Package training build** (Development configuration for headless training):
+   ```powershell
+   .\scripts\package-training.ps1
+   ```
+
+3. **Run training** (single session or batch):
+   ```powershell
+   .\scripts\run-training-headless.ps1
+   # Or for batch training with multiple configurations:
+   .\scripts\run-batch-special.ps1
+   ```
+
+See [Learning Agents](/LEARNING_AGENTS.md) for detailed documentation.
 
 ## Troubleshooting
 
 See [Troubleshooting](/TROUBLESHOOTING.md).
-
-## Learning agents
-
-See [Learning Agents](/LEARNING_AGENTS.md)
